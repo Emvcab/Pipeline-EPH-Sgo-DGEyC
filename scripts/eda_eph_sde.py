@@ -39,34 +39,18 @@ Genera 4 gráficos PNG.
 # ────────────────────────────────────────────────────────────────────
 # ## 1. Preparación del entorno y carga de datos
 
-# Este script puede ejecutarse en local y conserva compatibilidad con entornos tipo Colab/Jupyter.
-# Detecta el entorno automáticamente.
+# Entorno oficial de ejecución: Python local desde la raíz del repositorio.
+# Las dependencias NO se instalan desde el código. Deben prepararse previamente con:
+#     python -m pip install -r requirements.txt
+# El notebook asociado puede utilizarse con fines demostrativos, pero no reemplaza
+# el flujo de ejecución del pipeline ni de este script.
 
-import sys
-
-EN_COLAB = "google.colab" in sys.modules
-
-# Instalar dependencias solo si hace falta (Colab las trae casi todas)
-try:
-    import pandas as pd
-    import matplotlib.pyplot as plt
-    import matplotlib.ticker as mtick
-except ImportError:
-    import subprocess
-    subprocess.run([sys.executable, "-m", "pip", "install", "-q",
-                    "pandas", "matplotlib"], check=True)
-    import pandas as pd
-    import matplotlib.pyplot as plt
-    import matplotlib.ticker as mtick
-
-print("Entorno detectado:", "Google Colab" if EN_COLAB else "Local (VSCode/Jupyter)")
+from pathlib import Path
 
 import pandas as pd
-from pathlib import Path
 import matplotlib.pyplot as plt
 import matplotlib.ticker as mtick
 
-EN_COLAB = False
 candidatos = [
     Path("historico_SDE.csv"),
     Path("results/historico_SDE.csv"),
@@ -351,6 +335,17 @@ print(f"4. No respuesta de ingresos: "
 
 
 # ────────────────────────────────────────────────────────────────────
-# ## 8. Descarga de gráficos (solo Colab)
+# ## 8. Salida de gráficos
 
-print("Los 4 gráficos PNG están guardados en la carpeta actual.")
+# Los gráficos se guardan como archivos PNG en el directorio desde el que se ejecuta
+# el script. La descarga, copia o publicación posterior es una acción externa al EDA.
+
+graficos = [
+    "eda_1_mercado_laboral.png",
+    "eda_2_informalidad.png",
+    "eda_3_ingresos_no_respuesta.png",
+    "eda_4_interanual.png",
+]
+print("Gráficos generados:")
+for grafico in graficos:
+    print(f"  - {Path(grafico).resolve()}")
