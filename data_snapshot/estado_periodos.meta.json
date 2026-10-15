@@ -10,7 +10,7 @@
   "periodo": null,
   "anio": null,
   "trimestre": null,
-  "fecha_hora_generacion": "2026-10-07T19:51:01",
+  "fecha_hora_generacion": "2026-10-14T23:04:22",
   "version_pipeline": "3.2.1",
   "filas": 13,
   "columnas": 8,
@@ -58,9 +58,13 @@
   "filtros_aplicados": [
     "AGLOMERADO = 18",
     "P21 > 0 para estadísticas de ingresos",
-    "PONDERA válida y positiva para promedios ponderados de ingresos"
+    "PONDIIO válida y positiva para el promedio ponderado de P21"
   ],
   "ponderador": "PONDERA",
+  "ponderadores": {
+    "tasas_laborales_y_expansiones": "PONDERA",
+    "ingreso_ocupacion_principal_P21": "PONDIIO"
+  },
   "cantidad_nulos": {
     "periodo": 0,
     "fecha_esperada": 0,
@@ -85,8 +89,8 @@
   ],
   "ingresos_nominales": false,
   "estado_validacion": "VALIDADO",
-  "ultima_ejecucion_exitosa": "2026-10-07T19:51:01",
+  "ultima_ejecucion_exitosa": "2026-10-14T23:04:22",
   "archivo_origen": "historico_SDE.csv",
-  "identificador_ejecucion": "583a94cf32150add",
-  "hash_sha256": "5b7791992fd3e5f54786868afd53c4ae7cfeee74445674ca76b2a301e6894cd1"
+  "identificador_ejecucion": "a1b6c01ca447cb9a",
+  "hash_sha256": "d55d123ffa52fa9623c284f99e66fa5b3b05ccd92bba04d35647777744162a96"
 }

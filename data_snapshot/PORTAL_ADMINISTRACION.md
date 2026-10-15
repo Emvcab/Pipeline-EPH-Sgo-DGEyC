@@ -2,7 +2,7 @@
 
 ## Objetivo
 
-La versión 3.2 incorpora al dashboard una capa de operación para usuarios no técnicos. El portal conserva las vistas públicas de indicadores y agrega:
+La capa administrativa se incorporó en V3.2 y se mantiene vigente en V3.4.0. El portal conserva las vistas públicas de indicadores y agrega:
 
 - calendario de fechas esperadas y estado local de cada trimestre;
 - consulta manual de nuevas publicaciones en INDEC;
@@ -16,13 +16,14 @@ La lógica estadística no se duplica: el portal llama a las mismas funciones de
 
 ## Secciones del portal
 
-1. **Resumen ejecutivo**: indicadores del último período validado.
-2. **Evolución laboral**: series de actividad, empleo, desocupación e informalidad.
-3. **Ingresos**: indicadores nominales y advertencias de interpretación.
-4. **Calendario**: fecha esperada, estado y próximo período.
-5. **Calidad y auditoría**: estados, esquema, calidad y validaciones.
-6. **Documentación y descargas**: histórico, metadatos, manifiesto y guías.
-7. **Administración**: monitor, prevalidación y publicación controlada.
+1. **Resumen ejecutivo**: indicadores del período elegido y comparación descriptiva con otro trimestre.
+2. **Evolución laboral**: series interactivas de actividad, empleo, desocupación, inactividad e informalidad.
+3. **Brechas y perfiles**: sexo, edad, nivel educativo y deciles de ingreso.
+4. **Ingresos**: indicadores nominales y advertencias de interpretación.
+5. **Calendario**: fecha esperada, estado y próximo período.
+6. **Calidad y auditoría**: estados, esquema, calidad, validaciones y contraste metodológico 27/27 contra INDEC.
+7. **Documentación y descargas**: histórico, metadatos, manifiesto, evidencia metodológica y guías.
+8. **Administración**: monitor, prevalidación y publicación controlada.
 
 ## Seguridad del MVP
 
