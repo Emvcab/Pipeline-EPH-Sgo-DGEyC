@@ -1,5 +1,35 @@
 # Historial de cambios
 
+## 3.4.0 — 2026-10-14
+
+### Cierre metodológico
+- Se incorporan tasas específicas de actividad, empleo y desocupación para población de **14 años y más**, usando `PONDERA`.
+- Las tasas de 10 años y más se conservan como referencia histórica complementaria.
+- El promedio ponderado de `P21` usa `PONDIIO`; se elimina el uso de `PONDERA` como sustituto silencioso cuando falta el ponderador específico.
+- Los deciles utilizan `ADECOCUR` cuando está disponible; no se construyen deciles locales alternativos.
+- Se incorpora `docs/MATRIZ_VALIDACION_METODOLOGICA.md` y evidencia reproducible en `docs/validacion_metodologica_indec.csv`.
+- Se contrastan actividad, empleo y desocupación contra publicaciones oficiales del INDEC para 9 trimestres (`2024T1`–`2026T1`): **27/27 comparaciones concordantes** al nivel de redondeo publicado.
+- La pestaña **Calidad y auditoría** muestra el bloque de validación metodológica, su estado y las descargas asociadas.
+- La exportación PDF institucional queda recuperada e integrada al portal.
+- Suite de cierre: **97 tests aprobados**.
+
+### Alcance de la versión
+- La comparación territorial Santiago del Estero–La Banda vs. NOA vs. total EPH **no se incorpora** en V3.4.0. Tras la revisión con el equipo EPH se definió que no es necesaria para esta etapa.
+- El análisis continúa centrado en el **Aglomerado 18 — Santiago del Estero–La Banda**.
+- Las comparaciones entre períodos y grupos siguen siendo descriptivas: esta versión no calcula errores estándar, intervalos de confianza ni pruebas de hipótesis asociadas al diseño muestral.
+- La informalidad continúa con contraste externo pendiente. El control interno `tasa_no_respuesta_hogar` basado en `REALIZADA` queda documentado como punto técnico a revisar antes de interpretarlo como indicador de no respuesta.
+
+### Ajuste de coherencia técnica tras devolución docente
+- Se explicita que el entorno operativo del proyecto es **Python local**, ejecutado desde la raíz del repositorio.
+- Se elimina del EDA la instalación automática de librerías en tiempo de ejecución: las dependencias se preparan mediante `requirements.txt`.
+- El notebook queda identificado como recurso demostrativo/exploratorio. Colab puede utilizarse para una demostración, pero no es el entorno de ejecución del ETL, el monitor ni Streamlit.
+- La documentación histórica deja de limitarse a frases genéricas y explica **cómo**, **por qué** y **para qué** se introdujeron las principales decisiones de arquitectura y refactorización.
+
+### Documentación y release
+- README, metodología, arquitectura, diccionario, guía de uso, manual técnico, manual de usuario, matriz metodológica y roadmap se actualizan al estado de cierre V3.4.0.
+- Se agrega `docs/RELEASE_NOTES_V3_4_0.md` como texto base del release de GitHub.
+- `PORTAL_VERSION` pasa de `3.4.0-dev` a `3.4.0`; el identificador interno `PIPELINE_VERSION = 3.2.1` se conserva por compatibilidad.
+
 ### Agregado — reporte PDF institucional por período
 - El Resumen ejecutivo permite descargar un PDF estático del período seleccionado.
 - El reporte incluye indicadores principales, comparación temporal, evolución reciente, ingresos nominales, brechas y perfiles cuando la salida segmentada está disponible, lecturas descriptivas y notas metodológicas.
@@ -15,7 +45,7 @@
 
 ### Mantenimiento de estructura del repositorio
 - El portal Streamlit se ubica en `portal/app.py`; se elimina la antigua ubicación `notebooks/app.py`.
-- `notebooks/` queda reservado exclusivamente para notebooks Jupyter/Colab (`.ipynb`).
+- `notebooks/` queda reservado para notebooks Jupyter de demostración/análisis (`.ipynb`); Colab puede usarse como soporte demostrativo, no como runtime del sistema.
 - El script EDA local se mueve de `notebooks/eda_eph_sde.py` a `scripts/eda_eph_sde.py`.
 - Los despliegues existentes deben configurar `portal/app.py` como archivo principal.
 - No cambia el ETL, los indicadores, las validaciones ni la lógica administrativa.
@@ -160,7 +190,7 @@ Implementación de sugerencia recibida en devolución institucional de la DGEyC:
 ## [2.0.0] — 2026-06-26
 
 ### Cambiado
-- **Refactorización profesional completa del pipeline**, reduciendo de 1.434 a 411 líneas (-71%) sin pérdida de funcionalidad técnica
+- **Refactorización estructural del pipeline**: se separaron responsabilidades, se eliminaron diagnósticos y salidas de uso único, se centralizó configuración y se reutilizó lógica repetida. Como consecuencia, el archivo principal pasó de 1.434 a 411 líneas (-71%) sin perder el flujo ETL necesario; la reducción de tamaño fue un resultado de simplificar responsabilidades, no un objetivo aislado.
 - Adopción de estándares profesionales: `type hints` completos, `docstrings`, logging estructurado, manejo explícito de errores
 - Centralización de constantes en sección de configuración al inicio del archivo
 - Reemplazo de `os.path` por `pathlib.Path` para manejo de rutas
@@ -175,6 +205,9 @@ Implementación de sugerencia recibida en devolución institucional de la DGEyC:
 - Suite de tests básicos en `tests/`
 - Documentación de arquitectura en `docs/ARQUITECTURA.md`
 
+### Motivación de la refactorización
+La implementación inicial concentraba descarga, lectura, validación, cálculo, diagnósticos y generación de salidas en un archivo amplio, lo que hacía más difícil localizar responsabilidades y probar cambios sin afectar otras etapas. La refactorización buscó **mantenibilidad, trazabilidad y capacidad de prueba**: separar qué hace cada bloque, reducir duplicación y dejar las operaciones habituales parametrizadas. Por eso un código más corto es mejor en esta versión sólo en la medida en que conserva el comportamiento necesario con menos lógica repetida y límites más claros entre responsabilidades.
+
 ### Eliminado
 - Funciones de diagnóstico geográfico (información movida a documentación)
 - Inventario de columnas por trimestre (uso único, no aporta valor continuo)
@@ -187,9 +220,9 @@ Implementación de sugerencia recibida en devolución institucional de la DGEyC:
 ## [1.5.0] — 2026-06-07
 
 ### Agregado
-- Lectura robusta probando 4 combinaciones de separador/codificación
-- Cálculo de ingreso promedio ponderado
-- Reporte de calidad de datos por trimestre
+- Lectura robusta probando 4 combinaciones de separador/codificación para tolerar variaciones reales de los TXT publicados y fallar de forma controlada si ninguna combinación resulta válida.
+- Cálculo de ingreso promedio ponderado para pasar de un resumen puramente muestral a una estimación que respeta el ponderador disponible en esa etapa del proyecto.
+- Reporte de calidad de datos por trimestre para dejar evidencia de nulos y códigos especiales antes de interpretar los indicadores.
 - Base unida individuo-hogar por `CODUSU + NRO_HOGAR`
 - Tasa de inactividad
 - Sistema de logs con timestamp en carpeta `logs/`
@@ -204,9 +237,9 @@ Implementación de sugerencia recibida en devolución institucional de la DGEyC:
 ## [1.0.0] — 2026-05-18
 
 ### Agregado
-- Versión inicial del pipeline (Hito 1)
-- Descarga automatizada desde el FTP del INDEC
-- Filtrado por aglomerado 18 (Santiago del Estero — La Banda)
+- Versión inicial del pipeline (Hito 1): se implementó un flujo ETL ejecutable por período que construía la ruta oficial del trimestre, descargaba el ZIP de microdatos del INDEC, localizaba los archivos de personas y hogares y procesaba el contenido con Python.
+- La descarga automatizada evitó bajar y organizar manualmente cada trimestre y permitió que año/trimestre fueran parámetros reproducibles de ejecución.
+- Después de leer los microdatos nacionales, el proceso filtraba `AGLOMERADO == 18` para conservar exclusivamente Santiago del Estero — La Banda antes de calcular y acumular los resultados locales.
 - Cálculo de tasas: actividad, empleo, desocupación, informalidad
 - Cálculo de ingreso promedio simple y mediana
 - Tres modos de ejecución: trimestre, año completo, todos los trimestres
