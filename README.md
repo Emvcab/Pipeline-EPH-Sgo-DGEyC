@@ -289,3 +289,9 @@ Encuesta Permanente de Hogares — Instituto Nacional de Estadística y Censos (
 ## Análisis segmentado V3.3
 
 La V3.3 agrega una capa analítica sobre el ETL 3.2.1 para explorar brechas por sexo, edad y nivel educativo, además de ingresos por deciles cuando `ADECOCUR` y el ponderador específico `PONDIIO` están disponibles. El portal muestra estas salidas en **Brechas y perfiles**. Son estimaciones descriptivas de la EPH y deben leerse junto con las consideraciones de error muestral.
+
+## Portal en línea
+
+La versión pública del portal EPH V3.4.0 está disponible en:
+
+https://pipeline-eph-dgeyc-v340.streamlit.app/
