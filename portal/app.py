@@ -1,4 +1,4 @@
-"""Dashboard institucional de indicadores EPH para el aglomerado 18."""
+"""Panel visual de indicadores EPH para el aglomerado 18."""
 
 from __future__ import annotations
 
@@ -7,7 +7,6 @@ import json
 import os
 import sys
 from pathlib import Path
-
 import pandas as pd
 import plotly.graph_objects as go
 import streamlit as st
@@ -25,6 +24,7 @@ sys.path.insert(0, str(RAIZ / "src"))
 import monitor_actualizaciones as monitor
 import portal_admin
 import pipeline as core
+from validacion_metodologica import redondear_un_decimal
 from pipeline import normalizar_estado, normalizar_periodo
 from visualizacion import filtrar_rango_periodos, rango_eje, variacion
 from interpretacion_brechas import lectura_deciles, lectura_dimension
@@ -35,7 +35,7 @@ DIR_RESULTADOS = RAIZ / "results"
 DIR_SNAPSHOT = RAIZ / "data_snapshot"
 DIR_DOCS = RAIZ / "docs"
 ESTADOS_VALIDOS = {"VALIDADO", "PUBLICADO"}
-PORTAL_VERSION = "3.4.0"
+PORTAL_VERSION = "3.5.0-dev"
 
 
 # Colores consistentes para las categorías de la sección "Brechas y perfiles".
@@ -89,7 +89,22 @@ def leer_csv(ruta: Path) -> pd.DataFrame | None:
         return pd.read_csv(ruta) if ruta.exists() else None
     except (OSError, pd.errors.ParserError, UnicodeDecodeError):
         return None
+def resolver_archivo_publicado(nombre: str) -> Path:
+    """
+    Busca primero una salida en la fuente activa.
+    Si no existe, utiliza el snapshot publicado como respaldo.
+    """
+    ruta_activa = DIR_ACTIVO / nombre
 
+    if ruta_activa.exists():
+        return ruta_activa
+
+    ruta_snapshot = DIR_SNAPSHOT / nombre
+
+    if ruta_snapshot.exists():
+        return ruta_snapshot
+
+    return ruta_activa
 
 def directorio_publicable(directorio: Path) -> bool:
     """Acepta un directorio sólo si su último período está validado."""
@@ -363,6 +378,7 @@ estado_ultimo = estados.loc[estados["periodo"].astype(str) == periodo_ultimo].il
 (
     tab_resumen,
     tab_evolucion,
+    tab_presion,
     tab_brechas,
     tab_ingresos,
     tab_calendario,
@@ -372,6 +388,7 @@ estado_ultimo = estados.loc[estados["periodo"].astype(str) == periodo_ultimo].il
 ) = st.tabs([
     "Resumen ejecutivo",
     "Evolución laboral",
+    "Presión laboral",
     "Brechas y perfiles",
     "Ingresos",
     "Calendario",
@@ -480,9 +497,10 @@ with tab_resumen:
         "Genera un PDF ejecutivo del período de referencia usando únicamente las salidas "
         "agregadas validadas. El reporte no recalcula el ETL."
     )
-    ruta_segmentado_reporte = (
-        DIR_ACTIVO / f"analisis_segmentado_SDE_{periodo_referencia}.csv"
-    )
+    ruta_segmentado_reporte = resolver_archivo_publicado(
+    f"analisis_segmentado_SDE_{periodo_referencia}.csv"
+)
+    
     segmentado_reporte = leer_csv(ruta_segmentado_reporte)
     try:
         pdf_reporte = generar_reporte_pdf(
@@ -587,7 +605,273 @@ with tab_evolucion:
         "y no se realiza imputación ni se reemplazan faltantes por cero."
     )
 
+with tab_presion:
+    st.header("Presión sobre el mercado de trabajo")
 
+    st.caption(
+        "Estos indicadores permiten observar situaciones de presión laboral que no se reflejan "
+        "únicamente en la tasa de desocupación. Todas las tasas de esta sección se calculan "
+        "sobre la Población Económicamente Activa (PEA) y utilizan PONDERA."
+    )
+
+    columnas_presion = [
+        "tasa_ocupados_demandantes",
+        "tasa_subocupacion",
+        "tasa_subocupacion_demandante",
+        "tasa_subocupacion_no_demandante",
+    ]
+
+    faltantes_presion = [
+        columna
+        for columna in columnas_presion
+        if columna not in df.columns
+    ]
+
+    if faltantes_presion:
+        st.warning(
+            "Los indicadores de presión laboral todavía no están disponibles "
+            "en el histórico activo."
+        )
+
+    else:
+        p1, p2 = st.columns(2)
+
+        with p1:
+            periodo_presion = st.selectbox(
+                "Período de referencia",
+                periodos_disponibles,
+                index=len(periodos_disponibles) - 1,
+                key="presion_periodo_referencia",
+            )
+
+        indice_presion = periodos_disponibles.index(
+            periodo_presion
+        )
+
+        fila_presion = df.iloc[indice_presion]
+
+        fila_anterior_presion = (
+            df.iloc[indice_presion - 1]
+            if indice_presion > 0
+            else None
+        )
+
+        periodo_anterior_presion = (
+            str(fila_anterior_presion["periodo"])
+            if fila_anterior_presion is not None
+            else None
+        )
+
+        with p2:
+            st.metric(
+                "PEA expandida",
+                formato_numero(
+                    fila_presion.get(
+                        "pea_expandida"
+                    )
+                ),
+            )
+
+        c1, c2, c3, c4 = st.columns(4)
+
+        c1.metric(
+            "Ocupados demandantes",
+            formato_tasa(
+                fila_presion.get(
+                    "tasa_ocupados_demandantes"
+                )
+            ),
+            delta=delta_pp(
+                fila_presion.get(
+                    "tasa_ocupados_demandantes"
+                ),
+                (
+                    None
+                    if fila_anterior_presion is None
+                    else fila_anterior_presion.get(
+                        "tasa_ocupados_demandantes"
+                    )
+                ),
+                periodo_anterior_presion,
+            ),
+            delta_color="inverse",
+        )
+
+        c2.metric(
+            "Subocupación horaria",
+            formato_tasa(
+                fila_presion.get(
+                    "tasa_subocupacion"
+                )
+            ),
+            delta=delta_pp(
+                fila_presion.get(
+                    "tasa_subocupacion"
+                ),
+                (
+                    None
+                    if fila_anterior_presion is None
+                    else fila_anterior_presion.get(
+                        "tasa_subocupacion"
+                    )
+                ),
+                periodo_anterior_presion,
+            ),
+            delta_color="inverse",
+        )
+
+        c3.metric(
+            "Subocupación demandante",
+            formato_tasa(
+                fila_presion.get(
+                    "tasa_subocupacion_demandante"
+                )
+            ),
+            delta=delta_pp(
+                fila_presion.get(
+                    "tasa_subocupacion_demandante"
+                ),
+                (
+                    None
+                    if fila_anterior_presion is None
+                    else fila_anterior_presion.get(
+                        "tasa_subocupacion_demandante"
+                    )
+                ),
+                periodo_anterior_presion,
+            ),
+            delta_color="inverse",
+        )
+
+        c4.metric(
+            "Subocupación no demandante",
+            formato_tasa(
+                fila_presion.get(
+                    "tasa_subocupacion_no_demandante"
+                )
+            ),
+            delta=delta_pp(
+                fila_presion.get(
+                    "tasa_subocupacion_no_demandante"
+                ),
+                (
+                    None
+                    if fila_anterior_presion is None
+                    else fila_anterior_presion.get(
+                        "tasa_subocupacion_no_demandante"
+                    )
+                ),
+                periodo_anterior_presion,
+            ),
+            delta_color="inverse",
+        )
+
+        st.caption(
+            "Las variaciones corresponden a puntos porcentuales respecto "
+            "del trimestre inmediatamente anterior disponible. "
+            "Son comparaciones descriptivas."
+        )
+
+        st.subheader("¿Qué significa cada indicador?")
+
+        st.markdown(
+            """
+**Ocupados demandantes:** personas ocupadas que buscan activamente otra ocupación.
+
+**Subocupación horaria:** personas ocupadas que trabajan menos de 35 horas semanales
+por causas involuntarias y desean trabajar más horas.
+
+**Subocupación demandante:** personas subocupadas que además buscan activamente
+otra ocupación.
+
+**Subocupación no demandante:** personas subocupadas que desean trabajar más horas,
+pero no están buscando activamente otra ocupación.
+"""
+        )
+
+        st.info(
+            "Una tasa de desocupación baja no implica necesariamente ausencia de "
+            "problemas laborales. En la EPH, una persona puede ser considerada ocupada "
+            "si trabajó al menos una hora durante la semana de referencia. "
+            "Por eso, los indicadores de presión laboral ayudan a complementar la lectura "
+            "de la desocupación."
+        )
+
+        st.subheader("Evolución histórica")
+
+        r1, r2 = st.columns(2)
+
+        with r1:
+            desde_presion = st.selectbox(
+                "Desde",
+                periodos_disponibles,
+                index=0,
+                key="presion_desde",
+            )
+
+        with r2:
+            hasta_presion = st.selectbox(
+                "Hasta",
+                periodos_disponibles,
+                index=len(periodos_disponibles) - 1,
+                key="presion_hasta",
+            )
+
+        df_presion = filtrar_rango_periodos(
+            df,
+            desde_presion,
+            hasta_presion,
+        )
+
+        if (
+            periodos_disponibles.index(desde_presion)
+            > periodos_disponibles.index(hasta_presion)
+        ):
+            st.info(
+                "El rango estaba invertido; se ordenó automáticamente "
+                "para la visualización."
+            )
+
+        grafico_series_interactivo(
+            df_presion,
+            [
+                "tasa_ocupados_demandantes",
+                "tasa_subocupacion",
+            ],
+            {
+                "tasa_ocupados_demandantes":
+                    "Ocupados demandantes",
+                "tasa_subocupacion":
+                    "Subocupación horaria",
+            },
+            "Ocupados demandantes y subocupación horaria",
+            "Porcentaje de la PEA",
+            porcentaje=True,
+        )
+
+        grafico_series_interactivo(
+            df_presion,
+            [
+                "tasa_subocupacion_demandante",
+                "tasa_subocupacion_no_demandante",
+            ],
+            {
+                "tasa_subocupacion_demandante":
+                    "Subocupación demandante",
+                "tasa_subocupacion_no_demandante":
+                    "Subocupación no demandante",
+            },
+            "Composición de la subocupación",
+            "Porcentaje de la PEA",
+            porcentaje=True,
+        )
+
+        st.caption(
+            "Fuente: elaboración propia a partir de microdatos públicos "
+            "de la EPH-INDEC. Los cuatro indicadores fueron contrastados "
+            "con las publicaciones del INDEC para los períodos incluidos "
+            "en el histórico."
+        )
 with tab_brechas:
     st.header("Brechas y perfiles")
     st.caption(
@@ -601,12 +885,14 @@ with tab_brechas:
         index=len(periodos_disponibles) - 1,
         key="brechas_periodo",
     )
-    ruta_brechas = DIR_ACTIVO / f"analisis_segmentado_SDE_{periodo_brechas}.csv"
+    ruta_brechas = resolver_archivo_publicado(
+    f"analisis_segmentado_SDE_{periodo_brechas}.csv"
+)
     brechas = leer_csv(ruta_brechas)
     if brechas is None or brechas.empty:
         st.info(
-            "Este período todavía no tiene salida segmentada publicada. Para generarla hay que "
-            "reprocesar el trimestre con la V3.3 y luego actualizar explícitamente el snapshot."
+           "No se encontró una salida segmentada disponible para este período "
+           "ni en los resultados locales ni en el snapshot publicado."
         )
     else:
         dimensiones = brechas["dimension"].dropna().astype(str).unique().tolist()
@@ -999,7 +1285,241 @@ with tab_calidad:
             "La evidencia de validación metodológica no está disponible en esta instalación. "
             "Puede regenerarse con `python scripts/validar_contra_indec.py`."
         )
+        st.divider()
 
+    st.subheader("Validación de presión laboral contra INDEC")
+
+    st.caption(
+        "Contraste de ocupados demandantes, subocupación horaria, "
+        "subocupación demandante y subocupación no demandante para "
+        "Santiago del Estero - La Banda."
+    )
+
+    ruta_referencia_presion = (
+        DIR_DOCS / "referencia_indec_presion_laboral.csv"
+    )
+
+    referencia_presion = leer_csv(
+        ruta_referencia_presion
+    )
+
+    columnas_presion_validacion = {
+        "ocupados_demandantes": (
+            "ocupados_demandantes_expandidos"
+        ),
+        "subocupacion": (
+            "subocupados_expandidos"
+        ),
+        "subocupacion_demandante": (
+            "subocupados_demandantes_expandidos"
+        ),
+        "subocupacion_no_demandante": (
+            "subocupados_no_demandantes_expandidos"
+        ),
+    }
+
+    if (
+        referencia_presion is not None
+        and not referencia_presion.empty
+        and all(
+            columna in df.columns
+            for columna
+            in columnas_presion_validacion.values()
+        )
+        and "pea_expandida" in df.columns
+    ):
+        filas_validacion_presion = []
+
+        for _, fila_ref in referencia_presion.iterrows():
+
+            periodo = str(
+                fila_ref["periodo"]
+            )
+
+            fila_hist = df[
+                df["periodo"].astype(str)
+                == periodo
+            ]
+
+            if fila_hist.empty:
+                continue
+
+            fila_hist = fila_hist.iloc[-1]
+
+            pea = float(
+                fila_hist["pea_expandida"]
+            )
+
+            if pea <= 0:
+                continue
+
+            for (
+                indicador_ref,
+                columna_numerador,
+            ) in columnas_presion_validacion.items():
+
+                numerador = float(
+                    fila_hist[columna_numerador]
+                )
+
+                # Se calcula desde numerador y denominador
+                # sin utilizar una tasa previamente redondeada.
+                tasa_cruda = (
+                    numerador / pea * 100
+                )
+
+                pipeline_1d = (
+                    redondear_un_decimal(
+                        tasa_cruda
+                    )
+                )
+
+                indec_1d = (
+                    redondear_un_decimal(
+                        float(
+                            fila_ref[
+                                indicador_ref
+                            ]
+                        )
+                    )
+                )
+
+                filas_validacion_presion.append(
+                    {
+                        "periodo": periodo,
+                        "indicador": indicador_ref,
+                        "pipeline": pipeline_1d,
+                        "indec": indec_1d,
+                        "estado": (
+                            "OK"
+                            if pipeline_1d
+                            == indec_1d
+                            else "REVISAR"
+                        ),
+                    }
+                )
+
+        validacion_presion = pd.DataFrame(
+            filas_validacion_presion
+        )
+
+        if not validacion_presion.empty:
+
+            total_presion = len(
+                validacion_presion
+            )
+
+            ok_presion = int(
+                (
+                    validacion_presion[
+                        "estado"
+                    ] == "OK"
+                ).sum()
+            )
+
+            periodos_presion = (
+                validacion_presion[
+                    "periodo"
+                ].nunique()
+            )
+
+            indicadores_presion = (
+                validacion_presion[
+                    "indicador"
+                ].nunique()
+            )
+
+            p1, p2, p3, p4 = st.columns(4)
+
+            p1.metric(
+                "Concordancias",
+                f"{ok_presion} / {total_presion}",
+            )
+
+            p2.metric(
+                "Períodos contrastados",
+                periodos_presion,
+            )
+
+            p3.metric(
+                "Indicadores",
+                indicadores_presion,
+            )
+
+            p4.metric(
+                "Resultado",
+                (
+                    "VALIDADO"
+                    if ok_presion
+                    == total_presion
+                    else "REVISAR"
+                ),
+            )
+
+            if ok_presion == total_presion:
+                st.success(
+                    "Validación superada: las 52 comparaciones "
+                    "reproducen los valores publicados por INDEC "
+                    "al nivel de una cifra decimal."
+                )
+            else:
+                st.warning(
+                    f"{total_presion - ok_presion} "
+                    "comparaciones requieren revisión."
+                )
+
+            nombres_presion = {
+                "ocupados_demandantes":
+                    "Ocupados demandantes",
+                "subocupacion":
+                    "Subocupación horaria",
+                "subocupacion_demandante":
+                    "Subocupación demandante",
+                "subocupacion_no_demandante":
+                    "Subocupación no demandante",
+            }
+
+            tabla_presion = (
+                validacion_presion.copy()
+            )
+
+            tabla_presion[
+                "indicador"
+            ] = tabla_presion[
+                "indicador"
+            ].map(
+                nombres_presion
+            )
+
+            with st.expander(
+                "Ver detalle de las 52 comparaciones"
+            ):
+                st.dataframe(
+                    tabla_presion,
+                    width="stretch",
+                    hide_index=True,
+                )
+
+            boton_descarga(
+                ruta_referencia_presion,
+                "Descargar referencia INDEC "
+                "de presión laboral",
+                "dl_referencia_presion_indec",
+            )
+
+            st.info(
+                "La concordancia demuestra reproducción de "
+                "los valores publicados al nivel de redondeo "
+                "utilizado en los informes. No constituye una "
+                "certificación formal del INDEC ni una prueba "
+                "de significancia estadística."
+            )
+
+    else:
+        st.info(
+            "La referencia o las columnas necesarias para "
+            "validar presión laboral no están disponibles."
+        )
     st.divider()
     st.subheader("Estado de períodos")
     st.dataframe(estados, width="stretch", hide_index=True)
@@ -1314,6 +1834,6 @@ with tab_admin:
 
 st.divider()
 st.caption(
-    "Práctica Profesionalizante II · ITSE 2026 · "
+    "Práctica Profesionalizante III · ITSE 2026 · "
     "Achaval · Cabaña · Constantinidi · Gomez · Pinto Villegas"
 )
