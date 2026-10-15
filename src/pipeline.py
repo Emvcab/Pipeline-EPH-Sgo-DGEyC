@@ -535,11 +535,94 @@ def cargar_y_filtrar(
         raise RuntimeError("El aglomerado 18 no está presente en ambas bases.")
     return sde_ind, sde_hog
 
+def calcular_presion_mercado_trabajo(df_ind: pd.DataFrame) -> dict:
+    """
+    Calcula indicadores de presión sobre el mercado de trabajo.
 
+    Metodología:
+    - PEA: ESTADO en {1, 2}
+    - Ocupados demandantes: ESTADO == 1 y PP03J == 1
+    - Subocupados: ESTADO == 1 e INTENSI == 1
+    - Subocupados demandantes: subocupados y PP03J == 1
+    - Subocupados no demandantes: subocupados y PP03J == 2
+    - Ponderador: PONDERA
+    - Denominador de las tasas: PEA expandida
+    """
+    columnas_requeridas = {"ESTADO", "PONDERA", "INTENSI", "PP03J"}
+    faltantes = columnas_requeridas - set(df_ind.columns)
+
+    if faltantes:
+        raise ValueError(
+            "Faltan variables necesarias para calcular presión laboral: "
+            + ", ".join(sorted(faltantes))
+        )
+
+    estado = pd.to_numeric(df_ind["ESTADO"], errors="coerce")
+    pondera = pd.to_numeric(df_ind["PONDERA"], errors="coerce")
+    intensi = pd.to_numeric(df_ind["INTENSI"], errors="coerce")
+    pp03j = pd.to_numeric(df_ind["PP03J"], errors="coerce")
+
+    peso_valido = pondera.notna() & (pondera > 0)
+
+    pea = peso_valido & estado.isin([1, 2])
+    ocupados = peso_valido & estado.eq(1)
+
+    ocupados_demandantes = ocupados & pp03j.eq(1)
+    subocupados = ocupados & intensi.eq(1)
+    subocupados_demandantes = subocupados & pp03j.eq(1)
+    subocupados_no_demandantes = subocupados & pp03j.eq(2)
+
+    def suma_pesos(mascara: pd.Series) -> float:
+        valor = pondera.loc[mascara].sum(min_count=1)
+        return 0.0 if pd.isna(valor) else float(valor)
+
+    p_pea = suma_pesos(pea)
+    p_ocupados_demandantes = suma_pesos(ocupados_demandantes)
+    p_subocupados = suma_pesos(subocupados)
+    p_subocupados_demandantes = suma_pesos(subocupados_demandantes)
+    p_subocupados_no_demandantes = suma_pesos(subocupados_no_demandantes)
+
+    return {
+        "pea_expandida_presion": p_pea,
+        "ocupados_demandantes_expandidos": p_ocupados_demandantes,
+        "subocupados_expandidos": p_subocupados,
+        "subocupados_demandantes_expandidos": p_subocupados_demandantes,
+        "subocupados_no_demandantes_expandidos": p_subocupados_no_demandantes,
+        "tasa_ocupados_demandantes": porcentaje(
+            p_ocupados_demandantes, p_pea
+        ),
+        "tasa_subocupacion": porcentaje(
+            p_subocupados, p_pea
+        ),
+        "tasa_subocupacion_demandante": porcentaje(
+            p_subocupados_demandantes, p_pea
+        ),
+        "tasa_subocupacion_no_demandante": porcentaje(
+            p_subocupados_no_demandantes, p_pea
+        ),
+    }
 def calcular_indicadores(
     sde_ind: pd.DataFrame, sde_hog: pd.DataFrame, anio: int, trimestre: int
 ) -> dict:
     """Calcula indicadores ponderados sin imputar valores faltantes."""
+    columnas_presion = {"ESTADO", "PONDERA", "INTENSI", "PP03J"}
+
+    if columnas_presion.issubset(sde_ind.columns):
+        presion_mercado = calcular_presion_mercado_trabajo(sde_ind)
+    else:
+        # Compatibilidad con bases o casos de prueba donde estas
+        # variables de presión laboral todavía no están disponibles.
+        presion_mercado = {
+            "pea_expandida_presion": None,
+            "ocupados_demandantes_expandidos": None,
+            "subocupados_expandidos": None,
+            "subocupados_demandantes_expandidos": None,
+            "subocupados_no_demandantes_expandidos": None,
+            "tasa_ocupados_demandantes": None,
+            "tasa_subocupacion": None,
+            "tasa_subocupacion_demandante": None,
+            "tasa_subocupacion_no_demandante": None,
+        }   
     estado = pd.to_numeric(sde_ind["ESTADO"], errors="coerce")
     edad = pd.to_numeric(sde_ind["CH06"], errors="coerce")
     mayores10 = sde_ind[edad >= 10]
@@ -642,6 +725,30 @@ def calcular_indicadores(
         "tasa_actividad_oficial": actividad_oficial,
         "tasa_empleo_oficial": empleo_oficial,
         "tasa_desocupacion": porcentaje(p_des, p_pea),
+        "ocupados_demandantes_expandidos": presion_mercado[
+        "ocupados_demandantes_expandidos"
+        ],
+        "subocupados_expandidos": presion_mercado[
+            "subocupados_expandidos"
+        ],
+        "subocupados_demandantes_expandidos": presion_mercado[
+            "subocupados_demandantes_expandidos"
+        ],
+        "subocupados_no_demandantes_expandidos": presion_mercado[
+            "subocupados_no_demandantes_expandidos"
+        ],
+        "tasa_ocupados_demandantes": presion_mercado[
+            "tasa_ocupados_demandantes"
+        ],
+        "tasa_subocupacion": presion_mercado[
+            "tasa_subocupacion"
+        ],
+        "tasa_subocupacion_demandante": presion_mercado[
+            "tasa_subocupacion_demandante"
+        ],
+        "tasa_subocupacion_no_demandante": presion_mercado[
+            "tasa_subocupacion_no_demandante"
+        ],
         "proporcion_inactiva_total": proporcion_inactiva,
         "tasa_actividad_10_mas": porcentaje(p_pea, p_may10),
         "tasa_empleo_10_mas": porcentaje(p_ocup, p_may10),
