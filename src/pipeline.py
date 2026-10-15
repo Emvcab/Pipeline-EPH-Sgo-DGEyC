@@ -1494,20 +1494,62 @@ def preparar_snapshot_desde_historico(
                     estado_validacion="VALIDADO", archivo_origen=ruta.name,
                 )
 
+        
         for documento in [
-            "DICCIONARIO_DATOS.md", "GUIA_USO.md", "METODOLOGIA.md",
-            "MONITOR_ACTUALIZACIONES.md", "PORTAL_ADMINISTRACION.md",
+            "DICCIONARIO_DATOS.md",
+            "GUIA_USO.md",
+            "METODOLOGIA.md",
+            "MONITOR_ACTUALIZACIONES.md",
+            "PORTAL_ADMINISTRACION.md",
         ]:
             origen = RAIZ / "docs" / documento
+
             if origen.exists():
                 copia = staging / documento
                 shutil.copy2(origen, copia)
-                guardar_metadatos_genericos(
-                    copia, f"Documento de apoyo para el dashboard: {documento}.",
-                    "Disponibilización", estado_validacion="VALIDADO", archivo_origen=documento,
-                )
-        generar_manifiesto(staging)
 
+                guardar_metadatos_genericos(
+                    copia,
+                    f"Documento de apoyo para el dashboard: {documento}.",
+                    "Disponibilización",
+                    estado_validacion="VALIDADO",
+                    archivo_origen=documento,
+                )
+
+        # Preservar análisis segmentados utilizados por el dashboard.
+        #
+        # El snapshot se reconstruye completamente en staging antes de
+        # reemplazar data_snapshot/. Por eso se conservan primero los
+        # análisis ya publicados y luego, si existen versiones nuevas
+        # en results/, estas tienen prioridad.
+
+        patrones_segmentados = [
+            "analisis_segmentado_SDE_*.csv",
+            "analisis_segmentado_SDE_*.meta.json",
+        ]
+
+        # 1. Conservar los archivos actualmente publicados.
+        if destino.exists():
+            for patron in patrones_segmentados:
+                for archivo in destino.glob(patron):
+                    shutil.copy2(
+                        archivo,
+                        staging / archivo.name,
+                    )
+
+        # 2. Si results/ contiene versiones nuevas, tienen prioridad.
+        if (
+            validaciones_existentes is not None
+            and validaciones_existentes.exists()
+        ):
+            for patron in patrones_segmentados:
+                for archivo in validaciones_existentes.glob(patron):
+                    shutil.copy2(
+                        archivo,
+                        staging / archivo.name,
+                    )
+
+        generar_manifiesto(staging)
         if respaldo.exists():
             shutil.rmtree(respaldo)
         if destino.exists():
