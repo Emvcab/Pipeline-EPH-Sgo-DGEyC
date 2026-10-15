@@ -16,8 +16,10 @@ El pipeline se mantiene en `src/pipeline.py` para facilitar su lectura operativa
 - Las tasas principales de actividad y empleo usan población total expandida.
 - La desocupación usa PEA expandida.
 - La proporción inactiva total se define como complemento de actividad oficial.
-- Las tasas de 10 años y más tienen nombres específicos.
-- `PONDERA` se aplica a estimaciones poblacionales, informalidad e ingreso promedio ponderado.
+- Las tasas específicas de 14 años y más están implementadas y conviven con las tasas 10+ de referencia histórica.
+- `PONDERA` se aplica a estimaciones poblacionales, tasas laborales e informalidad.
+- `PONDIIO` se aplica al promedio ponderado de `P21`; no se usa `PONDERA` como sustituto silencioso.
+- `ADECOCUR` se utiliza para deciles cuando está disponible.
 - Los faltantes no se imputan ni se sustituyen por cero.
 - Los ingresos son nominales.
 
@@ -45,7 +47,7 @@ Los metadatos se generan automáticamente para cada CSV y salida de auditoría. 
 
 ## Dashboard y escalabilidad
 
-`portal/app.py` es la única aplicación Streamlit y usa rutas relativas. La carpeta `notebooks/` contiene únicamente notebooks Jupyter/Colab (`.ipynb`), mientras que los scripts auxiliares de análisis se ubican en `scripts/`. El portal prioriza `results/` sólo si el último período está validado; de lo contrario usa `data_snapshot/`. Los gráficos se construyen desde CSV agregados.
+`portal/app.py` es la única aplicación Streamlit y usa rutas relativas. El entorno operativo es Python local desde la raíz del repositorio: las dependencias se preparan con `requirements.txt` y los scripts no instalan paquetes en tiempo de ejecución. La carpeta `notebooks/` contiene artefactos demostrativos Jupyter (`.ipynb`); pueden mostrarse en Colab, pero Colab no forma parte del runtime del pipeline. Los scripts auxiliares de análisis se ubican en `scripts/`. El portal prioriza `results/` sólo si el último período está validado; de lo contrario usa `data_snapshot/`. Los gráficos se construyen desde CSV agregados.
 
 Las cargas se distinguen como Crítica, Analítica, Calidad, Auditoría, Operativa, Visualización y Disponibilización. En una etapa posterior pueden agregarse métricas por etapa sin modificar las fórmulas públicas.
 
@@ -54,7 +56,7 @@ Las cargas se distinguen como Crítica, Analítica, Calidad, Auditoría, Operati
 - **Dependencia del INDEC.** El pipeline necesita que el INDEC publique el trimestre y sostenga la URL y el empaquetado actuales. El calendario local no confirma esa disponibilidad: si la fecha esperada ya pasó y no hay estado registrado, muestra `SIN PROCESAR`; el monitor es quien verifica si existe un ZIP válido. Si no está disponible o cambia el origen, no hay dato nuevo que incorporar.
 - **Cambios de formato de origen.** Nombres de archivos, variables, codificación o separadores pueden cambiar entre trimestres. La lectura prueba cuatro combinaciones conocidas y la validación de esquema detiene el proceso ante faltantes críticos, pero un cambio profundo exige actualizar los esquemas esperados en el código.
 - **Descarga y lectura completas antes del filtrado.** Cada corrida baja el ZIP nacional y carga la base completa en memoria antes de filtrar el Aglomerado 18. La descarga depende de la red y es la etapa más lenta; la lectura carga cientos de columnas de todos los aglomerados para conservar unas 1.500 filas locales.
-- **Crecimiento en memoria y tiempo.** El consumo escala con el tamaño de las bases nacionales y con la cantidad de períodos o variables que se agreguen. Con 12 trimestres el procesamiento local demora segundos por período una vez descargados los ZIP; el histórico agregado, en cambio, crece una fila por trimestre y no compromete recursos.
+- **Crecimiento en memoria y tiempo.** El consumo escala con el tamaño de las bases nacionales y con la cantidad de períodos o variables que se agreguen. Con 13 trimestres versionados (`2023T1`–`2026T1`) el procesamiento local demora segundos por período una vez descargados los ZIP; el histórico agregado, en cambio, crece una fila por trimestre y no compromete recursos.
 - **Publicación con revisión humana.** La actualización del snapshot es una decisión deliberada (`--publicar-snapshot` tras revisar el estado `VALIDADO`), no un proceso automático. Es un límite aceptado: prioriza la revisión institucional sobre la inmediatez.
 - **Regeneración tras cambios.** Cualquier cambio de fórmulas, columnas o períodos exige regenerar snapshot y manifiesto para que datos, metadatos y hashes vuelvan a ser coherentes.
 
@@ -104,6 +106,10 @@ Las comparaciones generan alertas orientativas con umbrales configurables para c
 El workflow `.github/workflows/monitor-eph.yml` ejecuta semanalmente sólo la consulta de disponibilidad y conserva el resultado como artefacto de auditoría. También admite ejecución manual. No realiza prevalidación ni publicación automática.
 
 
-## Capa de portal (v3.2)
+## Capa de portal (v3.4)
 
-`portal/app.py` funciona como interfaz de consulta y operación. `src/portal_admin.py` no duplica cálculos: expone el calendario del pipeline, reportes del monitor y una publicación asistida que delega nuevamente en `procesar_trimestre()` y `publicar_snapshot_validado()`. De esta forma, la UI no crea un segundo ETL ni una segunda regla de negocio.
+`portal/app.py` funciona como interfaz de consulta y operación en ocho secciones. Además de calendario y administración, V3.4 incorpora brechas y perfiles, exportación PDF y un bloque de validación metodológica contra INDEC. `src/portal_admin.py` no duplica cálculos: expone el calendario del pipeline, reportes del monitor y una publicación asistida que delega nuevamente en `procesar_trimestre()` y `publicar_snapshot_validado()`. La UI no crea un segundo ETL ni una segunda regla de negocio.
+
+## Validación metodológica (v3.4)
+
+`src/validacion_metodologica.py` y `scripts/validar_contra_indec.py` separan el contraste externo de la lógica principal. La evidencia versionada en `docs/validacion_metodologica_indec.csv` registra 27/27 concordancias para actividad, empleo y desocupación entre `2024T1` y `2026T1`. La matriz metodológica documenta ponderadores, universos, estados de validación y pendientes. La comparación territorial NOA/total no forma parte del alcance de cierre V3.4.0.

@@ -10,13 +10,13 @@
   "periodo": "2023T3",
   "anio": 2023,
   "trimestre": 3,
-  "fecha_hora_generacion": "2026-10-07T19:51:01",
+  "fecha_hora_generacion": "2026-10-14T23:04:22",
   "version_pipeline": "3.2.1",
   "estado_validacion": "VALIDADO",
-  "ultima_ejecucion_exitosa": "2026-10-07T19:51:01",
+  "ultima_ejecucion_exitosa": "2026-10-14T23:04:22",
   "archivo_origen": "validacion_esquema_2023T3.json",
-  "identificador_ejecucion": "525f3f2725880cf5",
-  "hash_sha256": "901e1f7d8e260be1f1bd435c668a36e0f23d59ab42d1b1ee681cb798c11cb541",
+  "identificador_ejecucion": "8f2bf2242f7e264a",
+  "hash_sha256": "cdf20e82335e5dca67bdeefc37b4549eb278340f782070e0ed6cf1bf88a2a929",
   "advertencias_metodologicas": [
     "El aglomerado 18 no permite separar Santiago Capital de La Banda."
   ],
