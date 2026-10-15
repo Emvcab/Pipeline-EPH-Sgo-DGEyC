@@ -796,7 +796,96 @@ pero no están buscando activamente otra ocupación.
             "Por eso, los indicadores de presión laboral ayudan a complementar la lectura "
             "de la desocupación."
         )
+        st.subheader("Jornada e intensidad laboral")
 
+        columnas_horas_portal = [
+            "promedio_horas_semanales_ponderado",
+            "mediana_horas_semanales_ponderada",
+            "sobreocupados_expandidos",
+            "tasa_sobreocupacion_horaria",
+        ]
+
+        if all(
+            columna in df.columns
+            for columna in columnas_horas_portal
+        ):
+            h1, h2, h3, h4 = st.columns(4)
+
+            h1.metric(
+                "Promedio semanal",
+                (
+                    f"{float(fila_presion.get('promedio_horas_semanales_ponderado')):.2f} h"
+                    if pd.notna(
+                        fila_presion.get(
+                            "promedio_horas_semanales_ponderado"
+                        )
+                    )
+                    else "No disponible"
+                ),
+            )
+
+            h2.metric(
+                "Mediana semanal",
+                (
+                    f"{float(fila_presion.get('mediana_horas_semanales_ponderada')):.1f} h"
+                    if pd.notna(
+                        fila_presion.get(
+                            "mediana_horas_semanales_ponderada"
+                        )
+                    )
+                    else "No disponible"
+                ),
+            )
+
+            h3.metric(
+                "Sobreocupación horaria",
+                formato_tasa(
+                    fila_presion.get(
+                        "tasa_sobreocupacion_horaria"
+                    )
+                ),
+                delta=delta_pp(
+                    fila_presion.get(
+                        "tasa_sobreocupacion_horaria"
+                    ),
+                    (
+                        None
+                        if fila_anterior_presion is None
+                        else fila_anterior_presion.get(
+                            "tasa_sobreocupacion_horaria"
+                        )
+                    ),
+                    periodo_anterior_presion,
+                ),
+                delta_color="inverse",
+            )
+
+            h4.metric(
+                "Sobreocupados expandidos",
+                formato_numero(
+                    fila_presion.get(
+                        "sobreocupados_expandidos"
+                    )
+                ),
+            )
+
+            st.caption(
+                "Las horas semanales se obtienen como PP3E_TOT + PP3F_TOT. "
+                "El promedio y la mediana se calculan entre ocupados que "
+                "trabajaron al menos una hora durante la semana de referencia."
+            )
+
+            st.info(
+                "La sobreocupación identifica a personas ocupadas que trabajan "
+                "más de 45 horas semanales. La tasa se calcula sobre la PEA. "
+                "En este proyecto la clasificación utiliza INTENSI=3."
+            )
+
+        else:
+            st.info(
+                "Los indicadores de horas trabajadas e intensidad todavía "
+                "no están disponibles en el histórico activo."
+            )
         st.subheader("Evolución histórica")
 
         r1, r2 = st.columns(2)
@@ -865,7 +954,73 @@ pero no están buscando activamente otra ocupación.
             "Porcentaje de la PEA",
             porcentaje=True,
         )
+        st.subheader("Evolución de horas e intensidad")
 
+        columnas_historicas_horas = [
+            "promedio_horas_semanales_ponderado",
+            "mediana_horas_semanales_ponderada",
+            "tasa_sobreocupacion_horaria",
+        ]
+
+        if all(
+            columna in df_presion.columns
+            for columna in columnas_historicas_horas
+        ):
+            gh1, gh2 = st.columns(2)
+
+            with gh1:
+                grafico_series_interactivo(
+                    df_presion,
+                    [
+                        "promedio_horas_semanales_ponderado",
+                        "mediana_horas_semanales_ponderada",
+                    ],
+                    {
+                        "promedio_horas_semanales_ponderado":
+                            "Promedio ponderado",
+                        "mediana_horas_semanales_ponderada":
+                            "Mediana ponderada",
+                    },
+                    "Horas trabajadas por semana",
+                    "Horas semanales",
+                )
+
+            with gh2:
+                grafico_series_interactivo(
+                    df_presion,
+                    [
+                        "tasa_sobreocupacion_horaria",
+                    ],
+                    {
+                        "tasa_sobreocupacion_horaria":
+                            "Sobreocupación horaria",
+                    },
+                    "Evolución de la sobreocupación",
+                    "Porcentaje de la PEA",
+                    porcentaje=True,
+                )
+
+            st.caption(
+                "El promedio y la mediana consideran a los ocupados que "
+                "trabajaron al menos una hora en la semana de referencia. "
+                "La tasa de sobreocupación corresponde a personas clasificadas "
+                "con INTENSI=3 y se calcula sobre la PEA."
+            )
+
+            st.warning(
+                "La construcción de sobreocupación fue validada internamente "
+                "contra las horas trabajadas en los 13 períodos. "
+                "El cuadro geográfico utilizado para la validación externa "
+                "de presión laboral no publica esta tasa por aglomerado, "
+                "por lo que no se presenta como una concordancia numérica "
+                "externa contra INDEC."
+            )
+
+        else:
+            st.info(
+                "No hay suficientes datos históricos de horas e intensidad "
+                "para mostrar esta evolución."
+            )
         st.caption(
             "Fuente: elaboración propia a partir de microdatos públicos "
             "de la EPH-INDEC. Los cuatro indicadores fueron contrastados "
