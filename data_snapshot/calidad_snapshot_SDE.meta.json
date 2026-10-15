@@ -10,7 +10,7 @@
   "periodo": null,
   "anio": null,
   "trimestre": null,
-  "fecha_hora_generacion": "2026-10-14T23:04:21",
+  "fecha_hora_generacion": "2026-10-15T05:05:59",
   "version_pipeline": "3.2.1",
   "filas": 13,
   "columnas": 7,
@@ -84,8 +84,8 @@
   ],
   "ingresos_nominales": false,
   "estado_validacion": "VALIDADO",
-  "ultima_ejecucion_exitosa": "2026-10-14T23:04:21",
+  "ultima_ejecucion_exitosa": "2026-10-15T05:05:59",
   "archivo_origen": "historico_SDE.csv",
-  "identificador_ejecucion": "d3dc84ad3e9eb23f",
+  "identificador_ejecucion": "04e0201099ba7742",
   "hash_sha256": "82811b176a8ab3f9ed5f079b6468cf9b7a1ad0eeb08e947f7489cdc0e1f76c62"
 }

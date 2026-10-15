@@ -10,10 +10,10 @@
   "periodo": "2023T2",
   "anio": 2023,
   "trimestre": 2,
-  "fecha_hora_generacion": "2026-10-14T23:04:21",
+  "fecha_hora_generacion": "2026-10-15T05:05:59",
   "version_pipeline": "3.2.1",
   "filas": 1,
-  "columnas": 38,
+  "columnas": 46,
   "variables": [
     "anio",
     "trimestre",
@@ -52,7 +52,15 @@
     "hogares_encuestados",
     "tasa_no_respuesta_hogar",
     "fecha_procesamiento",
-    "fuente"
+    "fuente",
+    "ocupados_demandantes_expandidos",
+    "subocupados_expandidos",
+    "subocupados_demandantes_expandidos",
+    "subocupados_no_demandantes_expandidos",
+    "tasa_ocupados_demandantes",
+    "tasa_subocupacion",
+    "tasa_subocupacion_demandante",
+    "tasa_subocupacion_no_demandante"
   ],
   "definicion_variables": {
     "anio": "Año del trimestre relevado",
@@ -92,7 +100,15 @@
     "hogares_encuestados": "Hogares publicados con REALIZADA igual a 1",
     "tasa_no_respuesta_hogar": "Proporción observada con REALIZADA igual a 0; no equivale a rechazo de campo",
     "fecha_procesamiento": "Fecha y hora de procesamiento",
-    "fuente": "Fuente de los datos"
+    "fuente": "Fuente de los datos",
+    "ocupados_demandantes_expandidos": "Variable documentada por su nombre de origen",
+    "subocupados_expandidos": "Variable documentada por su nombre de origen",
+    "subocupados_demandantes_expandidos": "Variable documentada por su nombre de origen",
+    "subocupados_no_demandantes_expandidos": "Variable documentada por su nombre de origen",
+    "tasa_ocupados_demandantes": "Variable documentada por su nombre de origen",
+    "tasa_subocupacion": "Variable documentada por su nombre de origen",
+    "tasa_subocupacion_demandante": "Variable documentada por su nombre de origen",
+    "tasa_subocupacion_no_demandante": "Variable documentada por su nombre de origen"
   },
   "tipos_de_datos": {
     "anio": "int64",
@@ -132,7 +148,15 @@
     "hogares_encuestados": "int64",
     "tasa_no_respuesta_hogar": "float64",
     "fecha_procesamiento": "object",
-    "fuente": "object"
+    "fuente": "object",
+    "ocupados_demandantes_expandidos": "float64",
+    "subocupados_expandidos": "float64",
+    "subocupados_demandantes_expandidos": "float64",
+    "subocupados_no_demandantes_expandidos": "float64",
+    "tasa_ocupados_demandantes": "float64",
+    "tasa_subocupacion": "float64",
+    "tasa_subocupacion_demandante": "float64",
+    "tasa_subocupacion_no_demandante": "float64"
   },
   "unidades": {
     "anio": "conteo, código o texto",
@@ -172,7 +196,15 @@
     "hogares_encuestados": "conteo, código o texto",
     "tasa_no_respuesta_hogar": "porcentaje",
     "fecha_procesamiento": "conteo, código o texto",
-    "fuente": "conteo, código o texto"
+    "fuente": "conteo, código o texto",
+    "ocupados_demandantes_expandidos": "conteo, código o texto",
+    "subocupados_expandidos": "conteo, código o texto",
+    "subocupados_demandantes_expandidos": "conteo, código o texto",
+    "subocupados_no_demandantes_expandidos": "conteo, código o texto",
+    "tasa_ocupados_demandantes": "conteo, código o texto",
+    "tasa_subocupacion": "conteo, código o texto",
+    "tasa_subocupacion_demandante": "conteo, código o texto",
+    "tasa_subocupacion_no_demandante": "conteo, código o texto"
   },
   "formulas": {
     "tasa_actividad_oficial": "PEA expandida / población total expandida × 100",
@@ -237,7 +269,15 @@
     "hogares_encuestados": 0,
     "tasa_no_respuesta_hogar": 0,
     "fecha_procesamiento": 0,
-    "fuente": 0
+    "fuente": 0,
+    "ocupados_demandantes_expandidos": 0,
+    "subocupados_expandidos": 0,
+    "subocupados_demandantes_expandidos": 0,
+    "subocupados_no_demandantes_expandidos": 0,
+    "tasa_ocupados_demandantes": 0,
+    "tasa_subocupacion": 0,
+    "tasa_subocupacion_demandante": 0,
+    "tasa_subocupacion_no_demandante": 0
   },
   "codigos_especiales": {
     "-9": "no respuesta",
@@ -253,8 +293,8 @@
   ],
   "ingresos_nominales": true,
   "estado_validacion": "VALIDADO",
-  "ultima_ejecucion_exitosa": "2026-10-14T23:04:21",
+  "ultima_ejecucion_exitosa": "2026-10-15T05:05:59",
   "archivo_origen": "historico_SDE.csv",
-  "identificador_ejecucion": "df1a78fc2d6767ed",
-  "hash_sha256": "5c8c81d9485f0b3301911f4161e23cd85d3c5989065c5c1417f65b44ef80a709"
+  "identificador_ejecucion": "50b06274be623825",
+  "hash_sha256": "93828ac7da24de41bd9102de24f9872b2b8126e9603d0d988fc8115ec1229e87"
 }
