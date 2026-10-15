@@ -1,7 +1,7 @@
 # Manual técnico del pipeline
 
-**Versión del pipeline:** 3.0.0 · **Python:** 3.10 o superior
-**Repositorio:** <https://github.com/Emvcab/Pipeline-EPH-DGEyC>
+**Versión del producto / portal:** 3.4.0 · **Motor ETL interno:** 3.2.1 · **Python:** 3.10 o superior
+**Repositorio:** <https://github.com/Emvcab/Pipeline-EPH-Sgo-DGEyC>
 
 Este manual describe la operación técnica del sistema: instalación, ejecución, salidas, validaciones, manejo de fallas y actualización del snapshot. Reemplaza como referencia vigente al manual anterior en formato Word, que describe la estructura de carpetas de una versión previa. Las definiciones de cálculo están en [METODOLOGIA.md](METODOLOGIA.md) y el detalle de columnas en [DICCIONARIO_DATOS.md](DICCIONARIO_DATOS.md).
 
@@ -10,14 +10,16 @@ Este manual describe la operación técnica del sistema: instalación, ejecució
 ## 1. Estructura del repositorio
 
 ```text
-Pipeline-EPH-DGEyC/
+Pipeline-EPH-Sgo-DGEyC/
 ├── src/pipeline.py              Pipeline ETL, validaciones, estados y publicación
 ├── src/monitor_actualizaciones.py Monitor y prevalidación
 ├── src/portal_admin.py           Operación administrativa del portal
 ├── src/visualizacion.py          Filtros y utilidades de visualización
+├── src/validacion_metodologica.py Contraste metodológico
+├── src/reporte_pdf.py             Reporte PDF institucional
 ├── portal/app.py                 Portal Streamlit
 ├── scripts/eda_eph_sde.py       Script EDA local/VS Code
-├── notebooks/EDA_EPH_SDE.ipynb  Notebook EDA Jupyter/Colab
+├── notebooks/EDA_EPH_SDE.ipynb  Notebook EDA demostrativo (Jupyter; Colab sólo como demo)
 ├── tests/                        Suites automatizadas
 ├── requirements.txt           Dependencias
 ├── data/                      ZIP y TXT descargados (excluidos de Git)
@@ -32,8 +34,8 @@ Pipeline-EPH-DGEyC/
 ## 2. Instalación
 
 ```bash
-git clone https://github.com/Emvcab/Pipeline-EPH-DGEyC.git
-cd Pipeline-EPH-DGEyC
+git clone https://github.com/Emvcab/Pipeline-EPH-Sgo-DGEyC.git
+cd Pipeline-EPH-Sgo-DGEyC
 python -m venv .venv
 ```
 
@@ -45,6 +47,11 @@ En Windows (PowerShell):
 .venv\Scripts\Activate.ps1
 python -m pip install -r requirements.txt
 ```
+
+
+### Entorno de ejecución
+
+La ejecución oficial es **local**, desde una terminal abierta en la raíz del repositorio. `requirements.txt` define las dependencias del entorno; ningún script del proyecto debe instalar paquetes durante su propia ejecución. El notebook EDA es un artefacto de demostración que consume salidas agregadas ya generadas. Si se presenta en Colab, se usa sólo como soporte visual/didáctico y no como entorno operativo del pipeline.
 
 En Linux o macOS:
 
@@ -93,7 +100,9 @@ Cada corrida escribe un registro con marca de tiempo en `logs/`. Para incorporar
 python -m pytest tests -q
 ```
 
-Resultado esperado en la versión 3.2.1: **68 passed**. Las pruebas escriben únicamente en directorios temporales del sistema; no tocan `data/`, `results/` ni `data_snapshot/`. Cubren fórmulas e indicadores, migración de nombres de tasas, rangos, metadatos y manifiesto, bloqueo de publicación ante controles fallidos, conservación del snapshot y rutas relativas.
+Resultado esperado al cierre de V3.4.0: **97 passed**. Las pruebas escriben únicamente en directorios temporales del sistema; no tocan `data/`, `results/` ni `data_snapshot/`. Cubren fórmulas e indicadores, migración de nombres de tasas, rangos, metadatos y manifiesto, bloqueo de publicación ante controles fallidos, conservación del snapshot y rutas relativas.
+
+La validación externa puede regenerarse con `python scripts/validar_contra_indec.py`. El archivo versionado registra **27/27 concordancias** para actividad, empleo y desocupación entre `2024T1` y `2026T1`.
 
 ## 5. Dashboard local
 
@@ -165,7 +174,7 @@ Si el trimestre pertenece a un año nuevo, antes del paso 1 agregar el año a `A
 Procedimiento para agregar un indicador al pipeline sin romper la coherencia entre datos, metadatos y documentación. No requiere reestructurar el sistema; sí requiere completar todos los pasos, porque un indicador sin metadata o sin pruebas queda fuera del estándar del proyecto.
 
 1. **Definir el indicador antes de tocar el código**: objetivo, población de referencia (por ejemplo, ocupados, población total, hogares) y denominador exacto. Dejar la definición escrita; las ambigüedades de denominador son la fuente de error más costosa.
-2. **Incorporar el cálculo en `calcular_indicadores()`** (`src/pipeline.py`), siguiendo el patrón existente: subpoblaciones con conversión numérica explícita, suma de `PONDERA` para expandir y la función `porcentaje()` para tasas, que ya maneja denominadores no positivos.
+2. **Incorporar el cálculo en `calcular_indicadores()`** (`src/pipeline.py`), siguiendo el patrón existente: subpoblaciones con conversión numérica explícita, suma de `PONDERA` para tasas y expansiones laborales y la función `porcentaje()` para tasas, que ya maneja denominadores no positivos. Para ingresos `P21`, usar `PONDIIO` de acuerdo con la metodología V3.4.0.
 3. **Registrar el nombre en los diccionarios del módulo**: descripción en `DICCIONARIO_COLUMNAS`, fórmula en `FORMULAS_INDICADORES` y unidad en `UNIDADES`. Con eso, la metadata del CSV documenta el indicador de forma automática.
 4. **Definir el tratamiento de nulos y de variables opcionales**: si la variable de origen puede faltar en algunos trimestres, el indicador debe quedar nulo en esos períodos (como hace `tasa_informalidad` con `EMPLEO`), nunca imputarse ni reemplazarse por cero. Si corresponde, sumar la variable de origen al esquema opcional.
 5. **Agregar pruebas automatizadas** en `tests/test_pipeline.py`: el valor esperado con datos de ejemplo, el caso de variable ausente y el rango válido. Si el indicador es una tasa, incorporarlo a los controles de rango de la validación de publicación.
