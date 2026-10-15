@@ -35,7 +35,7 @@ DIR_RESULTADOS = RAIZ / "results"
 DIR_SNAPSHOT = RAIZ / "data_snapshot"
 DIR_DOCS = RAIZ / "docs"
 ESTADOS_VALIDOS = {"VALIDADO", "PUBLICADO"}
-PORTAL_VERSION = "3.4.0-dev"
+PORTAL_VERSION = "3.4.0"
 
 
 # Colores consistentes para las categorías de la sección "Brechas y perfiles".
