@@ -117,6 +117,17 @@ FORMULAS_INDICADORES = {
     "tasa_no_respuesta_ingresos_ocupados": (
         "ocupados de muestra con P21=-9 / ocupados de muestra × 100"
     ),
+        "tasa_sobreocupacion_horaria": (
+        "sobreocupados expandidos con INTENSI=3 / PEA expandida × 100"
+    ),
+    "promedio_horas_semanales_ponderado": (
+        "suma((PP3E_TOT + PP3F_TOT) × PONDERA) / suma(PONDERA), "
+        "entre ocupados que trabajaron al menos una hora"
+    ),
+    "mediana_horas_semanales_ponderada": (
+        "mediana ponderada de PP3E_TOT + PP3F_TOT entre ocupados "
+        "que trabajaron al menos una hora"
+    ),
 }
 
 DICCIONARIO_COLUMNAS = {
@@ -149,6 +160,31 @@ DICCIONARIO_COLUMNAS = {
     "tasa_empleo_14_mas": "Tasa específica de empleo de la población de 14 años y más",
     "tasa_desocupacion_14_mas": "Tasa específica de desocupación de la población de 14 años y más",
     "tasa_informalidad": "Proporción de ocupados sin registro; nula si EMPLEO no está disponible",
+        "ocupados_que_trabajaron_expandidos": (
+        "Ocupados expandidos que trabajaron al menos una hora "
+        "durante la semana de referencia"
+    ),
+
+    "sobreocupados_expandidos": (
+        "Población sobreocupada expandida; INTENSI=3"
+    ),
+
+    "n_ocupados_horas_validas": (
+        "Cantidad muestral de ocupados con horas semanales válidas "
+        "y mayores que cero"
+    ),
+
+    "promedio_horas_semanales_ponderado": (
+        "Promedio ponderado de horas trabajadas semanalmente"
+    ),
+
+    "mediana_horas_semanales_ponderada": (
+        "Mediana ponderada de horas trabajadas semanalmente"
+    ),
+
+    "tasa_sobreocupacion_horaria": (
+        "Sobreocupados expandidos como porcentaje de la PEA expandida"
+    ),
     "ingreso_promedio_observado": "Promedio simple del ingreso nominal de la ocupación principal",
     "ingreso_mediano_observado": "Mediana del ingreso nominal de la ocupación principal",
     "ingreso_promedio_ponderado_observado": (
@@ -188,6 +224,9 @@ DICCIONARIO_COLUMNAS = {
 UNIDADES = {
     **{col: "porcentaje" for col in TASAS_PRINCIPALES + TASAS_14_MAS + TASAS_10_MAS},
     "tasa_informalidad": "porcentaje",
+    "tasa_sobreocupacion_horaria": "porcentaje",
+    "promedio_horas_semanales_ponderado": "horas semanales",
+    "mediana_horas_semanales_ponderada": "horas semanales",
     "tasa_no_respuesta_ingresos_ocupados": "porcentaje",
     "tasa_no_respuesta_hogar": "porcentaje",
     "ingreso_promedio_observado": "pesos argentinos nominales",
@@ -601,17 +640,219 @@ def calcular_presion_mercado_trabajo(df_ind: pd.DataFrame) -> dict:
             p_subocupados_no_demandantes, p_pea
         ),
     }
+def calcular_horas_e_intensidad(df_ind: pd.DataFrame) -> dict:
+    """
+    Calcula indicadores de horas trabajadas e intensidad de la ocupación.
+
+    Metodología:
+    - Ocupados: ESTADO == 1.
+    - Horas semanales totales: PP3E_TOT + PP3F_TOT.
+    - Se consideran válidas horas entre 0 y 168.
+    - Promedio y mediana ponderados: ocupados que trabajaron
+      al menos una hora en la semana, usando PONDERA.
+    - Sobreocupados: ESTADO == 1 e INTENSI == 3.
+    - Tasa de sobreocupación horaria: sobreocupados / PEA.
+    """
+    requeridas = {
+        "ESTADO",
+        "PONDERA",
+        "PP3E_TOT",
+        "PP3F_TOT",
+        "INTENSI",
+    }
+
+    faltantes = requeridas - set(df_ind.columns)
+
+    if faltantes:
+        raise ValueError(
+            "Faltan variables necesarias para calcular horas e intensidad: "
+            + ", ".join(sorted(faltantes))
+        )
+
+    estado = pd.to_numeric(
+        df_ind["ESTADO"],
+        errors="coerce",
+    )
+
+    pondera = pd.to_numeric(
+        df_ind["PONDERA"],
+        errors="coerce",
+    )
+
+    pp3e = pd.to_numeric(
+        df_ind["PP3E_TOT"],
+        errors="coerce",
+    )
+
+    pp3f = pd.to_numeric(
+        df_ind["PP3F_TOT"],
+        errors="coerce",
+    )
+
+    intensi = pd.to_numeric(
+        df_ind["INTENSI"],
+        errors="coerce",
+    )
+
+    horas = pp3e + pp3f
+
+    peso_valido = (
+        pondera.notna()
+        & pondera.gt(0)
+    )
+
+    horas_validas = (
+        horas.notna()
+        & horas.between(
+            0,
+            168,
+            inclusive="both",
+        )
+    )
+
+    pea = (
+        peso_valido
+        & estado.isin([1, 2])
+    )
+
+    ocupados = (
+        peso_valido
+        & estado.eq(1)
+    )
+
+    trabajaron_semana = (
+        ocupados
+        & horas_validas
+        & horas.gt(0)
+    )
+
+    sobreocupados = (
+        ocupados
+        & intensi.eq(3)
+    )
+
+    def suma_pesos(
+        mascara: pd.Series,
+    ) -> float:
+        valor = pondera.loc[
+            mascara
+        ].sum(min_count=1)
+
+        return (
+            0.0
+            if pd.isna(valor)
+            else float(valor)
+        )
+
+    pea_expandida = suma_pesos(
+        pea
+    )
+
+    trabajaron_expandidos = suma_pesos(
+        trabajaron_semana
+    )
+
+    sobreocupados_expandidos = suma_pesos(
+        sobreocupados
+    )
+
+    promedio_ponderado = None
+    mediana_ponderada = None
+
+    if trabajaron_semana.any():
+        horas_trabajaron = horas.loc[
+            trabajaron_semana
+        ].astype(float)
+
+        pesos_trabajaron = pondera.loc[
+            trabajaron_semana
+        ].astype(float)
+
+        suma_pesos_trabajaron = (
+            pesos_trabajaron.sum()
+        )
+
+        if suma_pesos_trabajaron > 0:
+            promedio_ponderado = round(
+                float(
+                    (
+                        horas_trabajaron
+                        * pesos_trabajaron
+                    ).sum()
+                    / suma_pesos_trabajaron
+                ),
+                2,
+            )
+
+            tabla_mediana = pd.DataFrame(
+                {
+                    "horas": horas_trabajaron,
+                    "peso": pesos_trabajaron,
+                }
+            ).sort_values("horas")
+
+            tabla_mediana[
+                "peso_acumulado"
+            ] = tabla_mediana[
+                "peso"
+            ].cumsum()
+
+            punto_medio = (
+                suma_pesos_trabajaron / 2
+            )
+
+            mediana_ponderada = float(
+                tabla_mediana.loc[
+                    tabla_mediana[
+                        "peso_acumulado"
+                    ].ge(punto_medio),
+                    "horas",
+                ].iloc[0]
+            )
+
+    return {
+        "ocupados_que_trabajaron_expandidos":
+            trabajaron_expandidos,
+
+        "sobreocupados_expandidos":
+            sobreocupados_expandidos,
+
+        "n_ocupados_horas_validas":
+            int(trabajaron_semana.sum()),
+
+        "promedio_horas_semanales_ponderado":
+            promedio_ponderado,
+
+        "mediana_horas_semanales_ponderada":
+            mediana_ponderada,
+
+        "tasa_sobreocupacion_horaria":
+            porcentaje(
+                sobreocupados_expandidos,
+                pea_expandida,
+            ),
+    }
 def calcular_indicadores(
     sde_ind: pd.DataFrame, sde_hog: pd.DataFrame, anio: int, trimestre: int
 ) -> dict:
     """Calcula indicadores ponderados sin imputar valores faltantes."""
-    columnas_presion = {"ESTADO", "PONDERA", "INTENSI", "PP03J"}
+        # ------------------------------------------------------------------
+    # Presión sobre el mercado de trabajo
+    # ------------------------------------------------------------------
+    columnas_presion = {
+        "ESTADO",
+        "PONDERA",
+        "INTENSI",
+        "PP03J",
+    }
 
     if columnas_presion.issubset(sde_ind.columns):
-        presion_mercado = calcular_presion_mercado_trabajo(sde_ind)
+        presion_mercado = calcular_presion_mercado_trabajo(
+            sde_ind
+        )
     else:
         # Compatibilidad con bases o casos de prueba donde estas
-        # variables de presión laboral todavía no están disponibles.
+        # variables todavía no están disponibles.
         presion_mercado = {
             "pea_expandida_presion": None,
             "ocupados_demandantes_expandidos": None,
@@ -622,8 +863,42 @@ def calcular_indicadores(
             "tasa_subocupacion": None,
             "tasa_subocupacion_demandante": None,
             "tasa_subocupacion_no_demandante": None,
-        }   
-    estado = pd.to_numeric(sde_ind["ESTADO"], errors="coerce")
+        }
+
+    # ------------------------------------------------------------------
+    # Horas trabajadas e intensidad de la ocupación
+    # ------------------------------------------------------------------
+    columnas_horas = {
+        "ESTADO",
+        "PONDERA",
+        "PP3E_TOT",
+        "PP3F_TOT",
+        "INTENSI",
+    }
+
+    if columnas_horas.issubset(sde_ind.columns):
+        horas_intensidad = calcular_horas_e_intensidad(
+            sde_ind
+        )
+    else:
+        # Compatibilidad con bases o casos de prueba donde estas
+        # variables todavía no están disponibles.
+        horas_intensidad = {
+            "ocupados_que_trabajaron_expandidos": None,
+            "sobreocupados_expandidos": None,
+            "n_ocupados_horas_validas": None,
+            "promedio_horas_semanales_ponderado": None,
+            "mediana_horas_semanales_ponderada": None,
+            "tasa_sobreocupacion_horaria": None,
+        }
+
+    # ------------------------------------------------------------------
+    # Indicadores generales
+    # ------------------------------------------------------------------
+    estado = pd.to_numeric(
+        sde_ind["ESTADO"],
+        errors="coerce",
+    )
     edad = pd.to_numeric(sde_ind["CH06"], errors="coerce")
     mayores10 = sde_ind[edad >= 10]
 
@@ -747,8 +1022,9 @@ def calcular_indicadores(
             "tasa_subocupacion_demandante"
         ],
         "tasa_subocupacion_no_demandante": presion_mercado[
-            "tasa_subocupacion_no_demandante"
-        ],
+            "tasa_subocupacion_no_demandante"],
+         **horas_intensidad,    
+        
         "proporcion_inactiva_total": proporcion_inactiva,
         "tasa_actividad_10_mas": porcentaje(p_pea, p_may10),
         "tasa_empleo_10_mas": porcentaje(p_ocup, p_may10),
