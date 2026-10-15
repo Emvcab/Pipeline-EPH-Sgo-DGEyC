@@ -1,14 +1,14 @@
 periodo,fecha_esperada,fecha_deteccion,fecha_procesamiento_estado,intentos,estado,mensaje,ultima_actualizacion
-2023T1,Junio 2023,2026-10-15 04:47:31,2026-10-15 04:47:31,1,VALIDADO,Período disponible en el snapshot validado.,2026-10-15T05:05:59
-2023T2,Septiembre 2023,2026-10-15 04:47:34,2026-10-15 04:47:34,1,VALIDADO,Período disponible en el snapshot validado.,2026-10-15T05:05:59
-2023T3,Diciembre 2023,2026-10-15 04:47:37,2026-10-15 04:47:37,1,VALIDADO,Período disponible en el snapshot validado.,2026-10-15T05:05:59
-2023T4,Marzo 2024,2026-10-15 04:47:39,2026-10-15 04:47:39,1,VALIDADO,Período disponible en el snapshot validado.,2026-10-15T05:05:59
-2024T1,Junio 2024,2026-10-15 04:47:49,2026-10-15 04:47:49,1,VALIDADO,Período disponible en el snapshot validado.,2026-10-15T05:05:59
-2024T2,Septiembre 2024,2026-10-15 04:47:52,2026-10-15 04:47:52,1,VALIDADO,Período disponible en el snapshot validado.,2026-10-15T05:05:59
-2024T3,Diciembre 2024,2026-10-15 04:47:54,2026-10-15 04:47:54,1,VALIDADO,Período disponible en el snapshot validado.,2026-10-15T05:05:59
-2024T4,Marzo 2025,2026-10-15 04:47:57,2026-10-15 04:47:57,1,VALIDADO,Período disponible en el snapshot validado.,2026-10-15T05:05:59
-2025T1,Junio 2025,2026-10-15 04:48:16,2026-10-15 04:48:16,1,VALIDADO,Período disponible en el snapshot validado.,2026-10-15T05:05:59
-2025T2,Septiembre 2025,2026-10-15 04:48:19,2026-10-15 04:48:19,1,VALIDADO,Período disponible en el snapshot validado.,2026-10-15T05:05:59
-2025T3,Diciembre 2025,2026-10-15 04:48:21,2026-10-15 04:48:21,1,VALIDADO,Período disponible en el snapshot validado.,2026-10-15T05:05:59
-2025T4,Marzo 2026,2026-10-15 04:48:23,2026-10-15 04:48:23,1,VALIDADO,Período disponible en el snapshot validado.,2026-10-15T05:05:59
-2026T1,Junio 2026,2026-10-15 04:48:38,2026-10-15 04:48:38,1,VALIDADO,Período disponible en el snapshot validado.,2026-10-15T05:05:59
+2023T1,Junio 2023,2026-10-15 07:00:35,2026-10-15 07:00:35,1,VALIDADO,Período disponible en el snapshot validado.,2026-10-15T07:10:29
+2023T2,Septiembre 2023,2026-10-15 07:00:36,2026-10-15 07:00:36,1,VALIDADO,Período disponible en el snapshot validado.,2026-10-15T07:10:29
+2023T3,Diciembre 2023,2026-10-15 07:00:38,2026-10-15 07:00:38,1,VALIDADO,Período disponible en el snapshot validado.,2026-10-15T07:10:29
+2023T4,Marzo 2024,2026-10-15 07:00:39,2026-10-15 07:00:39,1,VALIDADO,Período disponible en el snapshot validado.,2026-10-15T07:10:29
+2024T1,Junio 2024,2026-10-15 07:01:23,2026-10-15 07:01:23,1,VALIDADO,Período disponible en el snapshot validado.,2026-10-15T07:10:29
+2024T2,Septiembre 2024,2026-10-15 07:01:25,2026-10-15 07:01:25,1,VALIDADO,Período disponible en el snapshot validado.,2026-10-15T07:10:29
+2024T3,Diciembre 2024,2026-10-15 07:01:28,2026-10-15 07:01:28,1,VALIDADO,Período disponible en el snapshot validado.,2026-10-15T07:10:29
+2024T4,Marzo 2025,2026-10-15 07:01:31,2026-10-15 07:01:31,1,VALIDADO,Período disponible en el snapshot validado.,2026-10-15T07:10:29
+2025T1,Junio 2025,2026-10-15 07:01:40,2026-10-15 07:01:40,1,VALIDADO,Período disponible en el snapshot validado.,2026-10-15T07:10:29
+2025T2,Septiembre 2025,2026-10-15 07:01:42,2026-10-15 07:01:42,1,VALIDADO,Período disponible en el snapshot validado.,2026-10-15T07:10:29
+2025T3,Diciembre 2025,2026-10-15 07:01:45,2026-10-15 07:01:45,1,VALIDADO,Período disponible en el snapshot validado.,2026-10-15T07:10:29
+2025T4,Marzo 2026,2026-10-15 07:01:46,2026-10-15 07:01:46,1,VALIDADO,Período disponible en el snapshot validado.,2026-10-15T07:10:29
+2026T1,Junio 2026,2026-10-15 07:02:06,2026-10-15 07:02:06,1,VALIDADO,Período disponible en el snapshot validado.,2026-10-15T07:10:29

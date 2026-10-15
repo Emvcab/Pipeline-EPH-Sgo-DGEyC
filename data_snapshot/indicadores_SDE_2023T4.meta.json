@@ -10,10 +10,10 @@
   "periodo": "2023T4",
   "anio": 2023,
   "trimestre": 4,
-  "fecha_hora_generacion": "2026-10-15T05:05:59",
+  "fecha_hora_generacion": "2026-10-15T07:10:29",
   "version_pipeline": "3.2.1",
   "filas": 1,
-  "columnas": 46,
+  "columnas": 52,
   "variables": [
     "anio",
     "trimestre",
@@ -60,7 +60,13 @@
     "tasa_ocupados_demandantes",
     "tasa_subocupacion",
     "tasa_subocupacion_demandante",
-    "tasa_subocupacion_no_demandante"
+    "tasa_subocupacion_no_demandante",
+    "ocupados_que_trabajaron_expandidos",
+    "sobreocupados_expandidos",
+    "n_ocupados_horas_validas",
+    "promedio_horas_semanales_ponderado",
+    "mediana_horas_semanales_ponderada",
+    "tasa_sobreocupacion_horaria"
   ],
   "definicion_variables": {
     "anio": "Año del trimestre relevado",
@@ -108,7 +114,13 @@
     "tasa_ocupados_demandantes": "Variable documentada por su nombre de origen",
     "tasa_subocupacion": "Variable documentada por su nombre de origen",
     "tasa_subocupacion_demandante": "Variable documentada por su nombre de origen",
-    "tasa_subocupacion_no_demandante": "Variable documentada por su nombre de origen"
+    "tasa_subocupacion_no_demandante": "Variable documentada por su nombre de origen",
+    "ocupados_que_trabajaron_expandidos": "Ocupados expandidos que trabajaron al menos una hora durante la semana de referencia",
+    "sobreocupados_expandidos": "Población sobreocupada expandida; INTENSI=3",
+    "n_ocupados_horas_validas": "Cantidad muestral de ocupados con horas semanales válidas y mayores que cero",
+    "promedio_horas_semanales_ponderado": "Promedio ponderado de horas trabajadas semanalmente",
+    "mediana_horas_semanales_ponderada": "Mediana ponderada de horas trabajadas semanalmente",
+    "tasa_sobreocupacion_horaria": "Sobreocupados expandidos como porcentaje de la PEA expandida"
   },
   "tipos_de_datos": {
     "anio": "int64",
@@ -156,7 +168,13 @@
     "tasa_ocupados_demandantes": "float64",
     "tasa_subocupacion": "float64",
     "tasa_subocupacion_demandante": "float64",
-    "tasa_subocupacion_no_demandante": "float64"
+    "tasa_subocupacion_no_demandante": "float64",
+    "ocupados_que_trabajaron_expandidos": "float64",
+    "sobreocupados_expandidos": "float64",
+    "n_ocupados_horas_validas": "float64",
+    "promedio_horas_semanales_ponderado": "float64",
+    "mediana_horas_semanales_ponderada": "float64",
+    "tasa_sobreocupacion_horaria": "float64"
   },
   "unidades": {
     "anio": "conteo, código o texto",
@@ -204,7 +222,13 @@
     "tasa_ocupados_demandantes": "conteo, código o texto",
     "tasa_subocupacion": "conteo, código o texto",
     "tasa_subocupacion_demandante": "conteo, código o texto",
-    "tasa_subocupacion_no_demandante": "conteo, código o texto"
+    "tasa_subocupacion_no_demandante": "conteo, código o texto",
+    "ocupados_que_trabajaron_expandidos": "conteo, código o texto",
+    "sobreocupados_expandidos": "conteo, código o texto",
+    "n_ocupados_horas_validas": "conteo, código o texto",
+    "promedio_horas_semanales_ponderado": "horas semanales",
+    "mediana_horas_semanales_ponderada": "horas semanales",
+    "tasa_sobreocupacion_horaria": "porcentaje"
   },
   "formulas": {
     "tasa_actividad_oficial": "PEA expandida / población total expandida × 100",
@@ -219,7 +243,10 @@
     "tasa_inactividad_10_mas": "inactivos expandidos / población de 10 años y más expandida × 100",
     "tasa_informalidad": "ocupados expandidos con EMPLEO=2 / ocupados expandidos con EMPLEO en {1,2} × 100",
     "ingreso_promedio_ponderado_observado": "suma(P21 × PONDIIO) / suma(PONDIIO), para ocupados con P21 > 0",
-    "tasa_no_respuesta_ingresos_ocupados": "ocupados de muestra con P21=-9 / ocupados de muestra × 100"
+    "tasa_no_respuesta_ingresos_ocupados": "ocupados de muestra con P21=-9 / ocupados de muestra × 100",
+    "promedio_horas_semanales_ponderado": "suma((PP3E_TOT + PP3F_TOT) × PONDERA) / suma(PONDERA), entre ocupados que trabajaron al menos una hora",
+    "mediana_horas_semanales_ponderada": "mediana ponderada de PP3E_TOT + PP3F_TOT entre ocupados que trabajaron al menos una hora",
+    "tasa_sobreocupacion_horaria": "sobreocupados expandidos con INTENSI=3 / PEA expandida × 100"
   },
   "filtros_aplicados": [
     "AGLOMERADO = 18",
@@ -277,7 +304,13 @@
     "tasa_ocupados_demandantes": 0,
     "tasa_subocupacion": 0,
     "tasa_subocupacion_demandante": 0,
-    "tasa_subocupacion_no_demandante": 0
+    "tasa_subocupacion_no_demandante": 0,
+    "ocupados_que_trabajaron_expandidos": 0,
+    "sobreocupados_expandidos": 0,
+    "n_ocupados_horas_validas": 0,
+    "promedio_horas_semanales_ponderado": 0,
+    "mediana_horas_semanales_ponderada": 0,
+    "tasa_sobreocupacion_horaria": 0
   },
   "codigos_especiales": {
     "-9": "no respuesta",
@@ -293,8 +326,8 @@
   ],
   "ingresos_nominales": true,
   "estado_validacion": "VALIDADO",
-  "ultima_ejecucion_exitosa": "2026-10-15T05:05:59",
+  "ultima_ejecucion_exitosa": "2026-10-15T07:10:29",
   "archivo_origen": "historico_SDE.csv",
-  "identificador_ejecucion": "36cefe2076bf6ba4",
-  "hash_sha256": "fdc84038b6f4948c543959599a4e989f64d82852661b77a479ba4e3e8fccd22c"
+  "identificador_ejecucion": "fd854b0d8b658049",
+  "hash_sha256": "95f11a27eabd00a0934bc29d18cc6e08aa306aa9536edbef4bb16b7372af11ff"
 }
