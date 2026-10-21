@@ -24,7 +24,11 @@ NIVEL_EDUCATIVO = {
     6: "Superior/universitario completo",
     7: "Sin instrucción",
 }
-
+GRUPOS_EDAD = [
+    ("14 a 29 años", 14, 29),
+    ("30 a 64 años", 30, 64),
+    ("65 años y más", 65, None),
+]
 
 def _columna(df: pd.DataFrame, *candidatas: str) -> str | None:
     """Devuelve la primera columna disponible entre varios nombres equivalentes."""
@@ -119,8 +123,9 @@ def _indicadores_grupo(
 def generar_analisis_segmentado(
     sde_ind: pd.DataFrame, anio: int, trimestre: int
 ) -> pd.DataFrame:
-    """Construye indicadores por sexo, edad, educación y decil de ingreso.
-
+    """Construye indicadores por sexo, edad, educación, cruce edad-educación
+    y decil de ingreso.
+    - Edad × educación: cruce de las mismas bandas etarias y categorías de NIVEL_ED.
     - Sexo: tasas específicas para personas de 14 años y más.
     - Edad: 14-29, 30-64 y 65 años y más.
     - Educación: personas de 14 años y más; NIVEL_ED/NIVELED 1..7.
@@ -156,7 +161,7 @@ def generar_analisis_segmentado(
         ("30 a 64 años", 30, 64),
         ("65 años y más", 65, None),
     ]
-    for etiqueta, minimo, maximo in grupos_edad:
+    for etiqueta, minimo, maximo in GRUPOS_EDAD:
         mascara = datos["CH06"] >= minimo
         if maximo is not None:
             mascara &= datos["CH06"] <= maximo
@@ -179,7 +184,37 @@ def generar_analisis_segmentado(
                     grupo, dimension="Nivel educativo", categoria=etiqueta,
                     periodo=periodo, universo="Población de 14 años y más",
                 ))
+        # Cruce Edad × Nivel educativo.
+        # Reutiliza exactamente las mismas bandas etarias,
+        # categorías educativas y fórmulas de los análisis simples.
+        for etiqueta_edad, minimo, maximo in GRUPOS_EDAD:
+            mascara_edad = datos["CH06"] >= minimo
 
+            if maximo is not None:
+                mascara_edad &= datos["CH06"] <= maximo
+
+            for codigo, etiqueta_educacion in NIVEL_EDUCATIVO.items():
+                grupo = datos[
+                    mascara_edad
+                    & (educacion == codigo)
+                ]
+
+                if not grupo.empty:
+                    filas.append(
+                        _indicadores_grupo(
+                            grupo,
+                            dimension="Edad × Nivel educativo",
+                            categoria=(
+                                f"{etiqueta_edad} · "
+                                f"{etiqueta_educacion}"
+                            ),
+                            periodo=periodo,
+                            universo=(
+                                "Población de 14 años y más por grupo "
+                                "de edad y nivel educativo"
+                            ),
+                        )
+                    )
     # Decil del ingreso de la ocupación principal del aglomerado. Se utiliza la
     # variable construida por INDEC, no un qcut local que alteraría la metodología.
     col_decil = _columna(datos, "ADECOCUR")

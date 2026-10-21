@@ -29,8 +29,35 @@ def base_mock() -> pd.DataFrame:
 def test_genera_dimensiones_principales():
     resultado = generar_analisis_segmentado(base_mock(), 2025, 4)
     dims = set(resultado["dimension"])
-    assert {"Sexo", "Edad", "Nivel educativo", "Decil de ingreso"} <= dims
+    assert {
+    "Sexo",
+    "Edad",
+    "Nivel educativo",
+    "Edad × Nivel educativo",
+    "Decil de ingreso",
+} <= dims
+def test_cruce_edad_nivel_educativo():
+    resultado = generar_analisis_segmentado(base_mock(), 2025, 4)
 
+    cruce = resultado[
+        (resultado["dimension"] == "Edad × Nivel educativo")
+        & (
+            resultado["categoria"]
+            == "14 a 29 años · Secundario incompleto"
+        )
+    ]
+
+    assert len(cruce) == 1
+
+    fila = cruce.iloc[0]
+
+    # Dos personas de 14-29 años con secundario incompleto:
+    # una ocupada y una desocupada, ambas con peso 100.
+    assert fila["n_muestra"] == 2
+    assert fila["poblacion_expandida"] == 200
+    assert fila["tasa_actividad"] == 100.0
+    assert fila["tasa_empleo"] == 50.0
+    assert fila["tasa_desocupacion"] == 50.0
 
 def test_sexo_usa_14_mas():
     datos = base_mock()
