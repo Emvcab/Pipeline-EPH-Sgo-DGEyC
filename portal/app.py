@@ -2446,6 +2446,54 @@ with tab_calidad:
 
 with tab_documentacion:
     st.header("Documentación y descargas")
+    with st.expander(
+        "Alcance institucional y condiciones de publicación",
+        expanded=True,
+    ):
+        st.markdown(
+            """
+            ### Fuente y responsabilidad de los datos
+
+            Los microdatos utilizados corresponden a la **Encuesta Permanente
+            de Hogares (EPH)** producida por el **INDEC**.
+
+            Este proyecto procesa esos microdatos para generar indicadores,
+            controles, series históricas y visualizaciones reproducibles.
+
+            ### Alcance territorial
+
+            Los resultados corresponden al **Aglomerado 18 —
+            Santiago del Estero–La Banda**.
+
+            No deben interpretarse como resultados correspondientes a toda la
+            provincia de Santiago del Estero ni como estimaciones separadas
+            para Santiago Capital y La Banda.
+
+            ### Qué significa “validado”
+
+            Cuando el portal indica que un período o un indicador está
+            **validado**, significa que superó los controles definidos por
+            este proyecto.
+
+            Estos controles pueden incluir validaciones de esquema,
+            consistencia interna, pruebas automatizadas y, cuando existe una
+            referencia compatible, comparación numérica con publicaciones del
+            INDEC.
+
+            La palabra “validado” **no implica certificación oficial por parte
+            del INDEC ni de otro organismo público**.
+
+            ### Carácter del portal
+
+            Este portal constituye una herramienta técnica y analítica basada
+            en información pública de la EPH.
+
+            Sus resultados no reemplazan las publicaciones oficiales del
+            INDEC y no deben presentarse como una publicación oficial de la
+            DGEyC u otra institución sin la correspondiente autorización
+            institucional.
+            """
+        )
     st.caption(f"Fuente activa: {DESCRIPCION_FUENTE}.")
     c1, c2 = st.columns(2)
     with c1:
