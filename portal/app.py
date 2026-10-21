@@ -1030,10 +1030,11 @@ pero no están buscando activamente otra ocupación.
 with tab_brechas:
     st.header("Brechas y perfiles")
     st.caption(
-        "Esta sección profundiza el análisis de los microdatos por sexo, edad, nivel educativo "
-        "y deciles de ingreso cuando esas variables están disponibles. Las diferencias son "
-        "descriptivas y deben interpretarse considerando el error muestral de la EPH."
-    )
+    "Esta sección permite analizar diferencias por sexo, edad, nivel educativo, "
+    "el cruce entre edad y educación, y deciles de ingreso. "
+    "Los resultados son descriptivos: cuanto más pequeño es un grupo, "
+    "mayor cautela requiere su interpretación."
+)
     periodo_brechas = st.selectbox(
         "Período para análisis segmentado",
         periodos_disponibles,
@@ -1057,6 +1058,72 @@ with tab_brechas:
             key=f"brechas_dimension_{periodo_brechas}",
         )
         vista = brechas[brechas["dimension"].astype(str) == dimension].copy()
+        if dimension == "Edad × Nivel educativo":
+            vista["n_muestra"] = pd.to_numeric(
+                vista["n_muestra"],
+                errors="coerce",
+            )
+
+            def clasificar_base_muestral(n):
+                if pd.isna(n):
+                    return "No disponible"
+                if n < 10:
+                    return "Muy reducida"
+                if n < 30:
+                    return "Reducida"
+                return "Más amplia"
+
+            vista["base_muestral"] = vista["n_muestra"].apply(
+                clasificar_base_muestral
+            )
+
+            n_amplia = int((vista["n_muestra"] >= 30).sum())
+            n_reducida = int(
+                (
+                    (vista["n_muestra"] >= 10)
+                    & (vista["n_muestra"] < 30)
+                ).sum()
+            )
+            n_muy_reducida = int((vista["n_muestra"] < 10).sum())
+
+            st.info(
+                "Este cruce divide la muestra en grupos más específicos. "
+                "Por eso algunas combinaciones pueden contener pocos casos. "
+                "La población expandida indica a cuántas personas representa la muestra, "
+                "pero no reemplaza el número de personas efectivamente observadas."
+            )
+
+            c1, c2, c3 = st.columns(3)
+
+            c1.metric(
+                "Base más amplia",
+                n_amplia,
+                help="Combinaciones con 30 casos muestrales o más.",
+            )
+
+            c2.metric(
+                "Base reducida",
+                n_reducida,
+                help="Combinaciones entre 10 y 29 casos muestrales.",
+            )
+
+            c3.metric(
+                "Base muy reducida",
+                n_muy_reducida,
+                help="Combinaciones con menos de 10 casos muestrales.",
+            )
+
+            if n_muy_reducida > 0:
+                st.warning(
+                    "Las categorías con menos de 10 casos se conservan en la tabla "
+                    "para mantener la trazabilidad del análisis, pero sus tasas no deben "
+                    "interpretarse como estimaciones precisas ni utilizarse para conclusiones fuertes."
+                )
+
+            st.caption(
+                "Los cortes de 10 y 30 casos son una ayuda de lectura utilizada por este portal. "
+                "No constituyen una regla oficial de precisión estadística del INDEC."
+            )
 
         if dimension == "Decil de ingreso":
             vista["_orden_decil"] = pd.to_numeric(
@@ -1080,19 +1147,67 @@ with tab_brechas:
             })
         else:
             columnas_tabla = [
-                "categoria", "n_muestra", "poblacion_expandida", "tasa_actividad",
-                "tasa_empleo", "tasa_desocupacion", "tasa_informalidad",
+                "categoria",
+                "n_muestra",
+                "poblacion_expandida",
+                "tasa_actividad",
+                "tasa_empleo",
+                "tasa_desocupacion",
+                "tasa_informalidad",
                 "ingreso_promedio_ponderado_ocupados",
             ]
-            columnas_tabla = [c for c in columnas_tabla if c in vista.columns]
+
+            if dimension == "Edad × Nivel educativo":
+                columnas_tabla.append("base_muestral")
+
+            columnas_tabla = [
+                c for c in columnas_tabla
+                if c in vista.columns
+            ]
+
             tabla = vista[columnas_tabla].copy()
 
-        st.dataframe(tabla, width="stretch", hide_index=True)
+            tabla = tabla.rename(
+                columns={
+                    "categoria": "Grupo",
+                    "n_muestra": "Casos en muestra",
+                    "poblacion_expandida": "Población expandida",
+                    "tasa_actividad": "Actividad (%)",
+                    "tasa_empleo": "Empleo (%)",
+                    "tasa_desocupacion": "Desocupación (%)",
+                    "tasa_informalidad": "Informalidad (%)",
+                    "ingreso_promedio_ponderado_ocupados":
+                        "Ingreso medio ocupación principal",
+                    "base_muestral": "Base muestral",
+                }
+            )
 
-        if dimension != "Decil de ingreso":
+        tabla_visual = tabla.copy()
+
+        tabla_visual = tabla_visual.replace(
+            {
+                None: "—",
+                "None": "—",
+            }
+        )
+
+        tabla_visual = tabla_visual.fillna("—")
+
+        st.dataframe(
+            tabla_visual,
+            width="stretch",
+            hide_index=True,
+        )
+
+        if dimension == "Edad × Nivel educativo":
             metrica = st.selectbox(
                 "Indicador para comparar",
-                ["tasa_actividad", "tasa_empleo", "tasa_desocupacion", "tasa_informalidad"],
+                [
+                    "tasa_actividad",
+                    "tasa_empleo",
+                    "tasa_desocupacion",
+                    "tasa_informalidad",
+                ],
                 format_func=lambda x: {
                     "tasa_actividad": "Tasa de actividad",
                     "tasa_empleo": "Tasa de empleo",
@@ -1101,67 +1216,293 @@ with tab_brechas:
                 }[x],
                 key=f"brechas_metrica_{periodo_brechas}_{dimension}",
             )
-            graf = vista[["categoria", metrica]].copy()
-            graf[metrica] = pd.to_numeric(graf[metrica], errors="coerce")
-            graf = graf.dropna()
-            if not graf.empty:
-                categorias_graf = graf["categoria"].astype(str).tolist()
-                valores = graf[metrica].astype(float).tolist()
-                colores = colores_para_categorias(categorias_graf)
 
-                # Gráfico de puntos: permite ajustar el eje sin exagerar visualmente
-                # las diferencias como ocurriría con barras truncadas.
-                fig = go.Figure(go.Scatter(
-                    x=categorias_graf,
-                    y=valores,
-                    mode="markers+text",
-                    marker=dict(size=20, color=colores, line=dict(width=1, color="white")),
-                    text=[f"{valor:.2f}%" for valor in valores],
-                    textposition="top center",
-                    hovertemplate="%{x}<br>%{y:.2f}%<extra></extra>",
-                    showlegend=False,
-                ))
+            etiquetas_metricas = {
+                "tasa_actividad": "Tasa de actividad",
+                "tasa_empleo": "Tasa de empleo",
+                "tasa_desocupacion": "Tasa de desocupación",
+                "tasa_informalidad": "Tasa de informalidad",
+            }
+
+            cruce = vista[
+                ["categoria", "n_muestra", metrica]
+            ].copy()
+
+            cruce[metrica] = pd.to_numeric(
+                cruce[metrica],
+                errors="coerce",
+            )
+
+            cruce[["grupo_edad", "nivel_educativo"]] = (
+                cruce["categoria"]
+                .astype(str)
+                .str.split(" · ", n=1, expand=True)
+            )
+
+            orden_edades = [
+                "14 a 29 años",
+                "30 a 64 años",
+                "65 años y más",
+            ]
+
+            orden_educacion = [
+                "Primario incompleto",
+                "Primario completo",
+                "Secundario incompleto",
+                "Secundario completo",
+                "Superior/universitario incompleto",
+                "Superior/universitario completo",
+                "Sin instrucción",
+            ]
+
+            matriz_valores = (
+                cruce.pivot(
+                    index="grupo_edad",
+                    columns="nivel_educativo",
+                    values=metrica,
+                )
+                .reindex(
+                    index=orden_edades,
+                    columns=orden_educacion,
+                )
+            )
+
+            matriz_muestra = (
+                cruce.pivot(
+                    index="grupo_edad",
+                    columns="nivel_educativo",
+                    values="n_muestra",
+                )
+                .reindex(
+                    index=orden_edades,
+                    columns=orden_educacion,
+                )
+            )
+
+            textos = []
+
+            for edad in orden_edades:
+                fila_textos = []
+
+                for nivel in orden_educacion:
+                    valor = matriz_valores.loc[edad, nivel]
+                    n = matriz_muestra.loc[edad, nivel]
+
+                    if pd.isna(valor):
+                        texto = "—"
+                    else:
+                        texto = f"{valor:.1f}%"
+
+                        if not pd.isna(n):
+                            texto += f"<br>n={int(n)}"
+
+                            if n < 10:
+                                texto += " ⚠"
+
+                    fila_textos.append(texto)
+
+                textos.append(fila_textos)
+
+            fig = go.Figure(
+                data=go.Heatmap(
+                    z=matriz_valores.values,
+                    x=orden_educacion,
+                    y=orden_edades,
+                    text=textos,
+                    texttemplate="%{text}",
+                    customdata=matriz_muestra.values,
+                    zmin=0,
+                    zmax=100,
+                    colorscale="Blues",
+                    colorbar=dict(
+                        title="%"
+                    ),
+                    hovertemplate=(
+                        "<b>%{y}</b><br>"
+                        "%{x}<br>"
+                        "Valor: %{z:.2f}%<br>"
+                        "Casos en muestra: %{customdata}"
+                        "<extra></extra>"
+                    ),
+                )
+            )
+
+            fig.update_layout(
+                title=(
+                    f"{etiquetas_metricas[metrica]} "
+                    f"por edad y nivel educativo · {periodo_brechas}"
+                ),
+                xaxis_title="Nivel educativo",
+                yaxis_title="Grupo de edad",
+                margin=dict(
+                    l=20,
+                    r=20,
+                    t=70,
+                    b=20,
+                ),
+            )
+
+            fig.update_yaxes(
+                autorange="reversed"
+            )
+
+            st.plotly_chart(
+                fig,
+                use_container_width=True,
+                config={"displaylogo": False},
+            )
+
+            st.caption(
+                "Cada celda muestra el valor del indicador y el número de casos "
+                "observados en la muestra. El símbolo ⚠ identifica combinaciones "
+                "con menos de 10 casos. Las celdas sin valor indican que el "
+                "indicador no pudo calcularse para esa combinación."
+            )
+        elif dimension != "Decil de ingreso":
+            metrica = st.selectbox(
+                "Indicador para comparar",
+                [
+                    "tasa_actividad",
+                    "tasa_empleo",
+                    "tasa_desocupacion",
+                    "tasa_informalidad",
+                ],
+                format_func=lambda x: {
+                    "tasa_actividad": "Tasa de actividad",
+                    "tasa_empleo": "Tasa de empleo",
+                    "tasa_desocupacion": "Tasa de desocupación",
+                    "tasa_informalidad": "Tasa de informalidad",
+                }[x],
+                key=f"brechas_metrica_{periodo_brechas}_{dimension}",
+            )
+
+            graf = vista[
+                ["categoria", metrica]
+            ].copy()
+
+            graf[metrica] = pd.to_numeric(
+                graf[metrica],
+                errors="coerce",
+            )
+
+            graf = graf.dropna()
+
+            if not graf.empty:
+                categorias_graf = (
+                    graf["categoria"]
+                    .astype(str)
+                    .tolist()
+                )
+
+                valores = (
+                    graf[metrica]
+                    .astype(float)
+                    .tolist()
+                )
+
+                colores = colores_para_categorias(
+                    categorias_graf
+                )
+
+                fig = go.Figure(
+                    go.Scatter(
+                        x=categorias_graf,
+                        y=valores,
+                        mode="markers+text",
+                        marker=dict(
+                            size=20,
+                            color=colores,
+                            line=dict(
+                                width=1,
+                                color="white",
+                            ),
+                        ),
+                        text=[
+                            f"{valor:.2f}%"
+                            for valor in valores
+                        ],
+                        textposition="top center",
+                        hovertemplate=(
+                            "%{x}<br>"
+                            "%{y:.2f}%"
+                            "<extra></extra>"
+                        ),
+                        showlegend=False,
+                    )
+                )
+
                 rango = rango_eje(valores)
+
                 fig.update_layout(
                     title=f"{dimension} · {periodo_brechas}",
-                    xaxis_title="", yaxis_title="Porcentaje",
-                    margin=dict(l=20, r=20, t=55, b=20),
+                    xaxis_title="",
+                    yaxis_title="Porcentaje",
+                    margin=dict(
+                        l=20,
+                        r=20,
+                        t=55,
+                        b=20,
+                    ),
                 )
-                if rango is not None:
-                    fig.update_yaxes(range=[max(0, rango[0]), rango[1]])
-                st.plotly_chart(fig, use_container_width=True, config={"displaylogo": False})
-        else:
-            graf = vista[["categoria", "ingreso_promedio_ponderado_ocupados"]].copy()
-            graf["ingreso_promedio_ponderado_ocupados"] = pd.to_numeric(
-                graf["ingreso_promedio_ponderado_ocupados"], errors="coerce"
-            )
-            graf = graf.dropna()
-            if not graf.empty:
-                categorias_decil = graf["categoria"].astype(str).tolist()
-                colores_decil = [
-                    COLORES_DECILES[min(max(int(str(cat).split()[-1]) - 1, 0), 9)]
-                    for cat in categorias_decil
-                ]
-                fig = go.Figure(go.Bar(
-                    x=categorias_decil,
-                    y=graf["ingreso_promedio_ponderado_ocupados"],
-                    marker_color=colores_decil,
-                    hovertemplate="%{x}<br>$%{y:,.0f}<extra></extra>",
-                ))
-                fig.update_layout(
-                    title=f"Ingreso medio de la ocupación principal por decil · {periodo_brechas}",
-                    xaxis_title="", yaxis_title="Pesos corrientes",
-                    margin=dict(l=20, r=20, t=55, b=20),
-                    showlegend=False,
-                )
-                st.plotly_chart(fig, use_container_width=True, config={"displaylogo": False})
 
-        st.subheader("Lectura descriptiva del período")
+                if rango is not None:
+                    fig.update_yaxes(
+                        range=[
+                            max(0, rango[0]),
+                            rango[1],
+                        ]
+                    )
+
+                st.plotly_chart(
+                    fig,
+                    use_container_width=True,
+                    config={"displaylogo": False},
+                )
+                st.subheader("Lectura descriptiva del período")
+
+        mensajes_lectura = []
+
         if dimension == "Decil de ingreso":
             mensajes_lectura = lectura_deciles(vista)
+
+        elif dimension == "Edad × Nivel educativo":
+            muestra_lectura = pd.to_numeric(
+                vista["n_muestra"],
+                errors="coerce",
+            )
+
+            vista_lectura = vista[
+                muestra_lectura >= 10
+            ].copy()
+
+            if not vista_lectura.empty:
+                mensajes_lectura = lectura_dimension(
+                    vista_lectura,
+                    dimension,
+                    metrica,
+                )
+
+            mensajes_lectura.append(
+                "Las combinaciones con menos de 10 casos "
+                "se muestran en la tabla y en la matriz, "
+                "pero no se utilizan para identificar máximos "
+                "o mínimos en esta lectura automática."
+            )
+
         else:
-            mensajes_lectura = lectura_dimension(vista, dimension, metrica)
-        st.info("\n\n".join(f"• {mensaje}" for mensaje in mensajes_lectura))
+            mensajes_lectura = lectura_dimension(
+                vista,
+                dimension,
+                metrica,
+            )
+
+        if mensajes_lectura:
+            st.info(
+                "\n\n".join(
+                    f"• {mensaje}"
+                    for mensaje in mensajes_lectura
+                )
+            )
 
         st.caption(
             "Sexo: tasas específicas para población de 14 años y más. Los deciles utilizan "
