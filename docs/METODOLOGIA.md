@@ -1,7 +1,7 @@
 # Metodología de indicadores
 
-**Versión de referencia:** V3.4.0  
-**Ámbito:** Aglomerado 18 — Santiago del Estero - La Banda  
+**Versión de referencia:** V3.5.0  
+**Ámbito:** Aglomerado 18 — Santiago del Estero–La Banda  
 **Fuente:** microdatos públicos de la Encuesta Permanente de Hogares (EPH), INDEC
 
 ## Universo y ponderación
@@ -27,7 +27,7 @@ tasa_empleo_14_mas = ocupados 14+ expandidos / población 14+ expandida × 100
 tasa_desocupacion_14_mas = desocupados 14+ expandidos / PEA 14+ expandida × 100
 ```
 
-Estas tasas utilizan `PONDERA` y constituyen la referencia específica vigente incorporada en V3.4.0.
+Estas tasas utilizan `PONDERA` y constituyen la referencia específica vigente consolidada desde V3.4.0.
 
 ## Indicadores de 10 años y más
 
@@ -61,18 +61,63 @@ Cuando la base incluye `ADECOCUR` y `PONDIIO`, se utiliza la escala decílica pu
 
 ## Análisis segmentado
 
-La capa incorporada en V3.3 y vigente en V3.4 genera salidas adicionales para el Aglomerado 18 sin modificar las tasas agregadas históricas:
+La capa incorporada en V3.3 y ampliada en V3.5 genera salidas adicionales para el Aglomerado 18 sin modificar las tasas agregadas históricas:
 
 - **Sexo:** tasas de actividad, empleo y desocupación para población de 14 años y más; `CH04=1` varón y `CH04=2` mujer.
 - **Edad:** grupos de 14 a 29 años, 30 a 64 años y 65 años y más.
 - **Nivel educativo:** `NIVEL_ED` (o `NIVELED` por compatibilidad histórica); se excluye `9=Ns/Nr` de las categorías publicadas.
+- **Edad × Nivel educativo:** cruza los grupos 14–29, 30–64 y 65+ con siete niveles educativos. Se conserva `n_muestra` y población expandida.
 - **Deciles de ingreso:** `ADECOCUR` y `PONDIIO` cuando están disponibles.
 
-Las lecturas automáticas de brechas son estrictamente descriptivas.
+Las lecturas automáticas de brechas son estrictamente descriptivas. Los grupos con `n < 10` permanecen visibles, pero se excluyen de máximos y mínimos automáticos. Los umbrales muestrales son ayudas de lectura y no criterios oficiales de precisión del INDEC.
+
+## Presión sobre el mercado de trabajo
+
+La V3.5.0 incorpora indicadores que complementan la tasa de desocupación:
+
+```text
+ocupados demandantes =
+    ESTADO = 1 y PP03J = 1
+
+subocupación =
+    ESTADO = 1 e INTENSI = 1
+
+subocupación demandante =
+    ESTADO = 1, INTENSI = 1 y PP03J = 1
+
+subocupación no demandante =
+    ESTADO = 1, INTENSI = 1 y PP03J = 2
+```
+
+Las cuatro tasas utilizan `PONDERA` y tienen como denominador la PEA.
+
+La validación externa compara 13 períodos (`2023T1`–`2026T1`) y 4 indicadores: **52 de 52 concordancias** con las referencias versionadas en `docs/referencia_indec_presion_laboral.csv`.
+
+## Horas trabajadas e intensidad
+
+Las horas semanales se calculan como:
+
+```text
+horas_totales = PP3E_TOT + PP3F_TOT
+```
+
+Se obtienen promedio y mediana semanal ponderados entre ocupados con horas válidas.
+
+`INTENSI` se utiliza para controlar la intensidad de la ocupación:
+
+- `1`: subocupado;
+- `2`: ocupado pleno;
+- `3`: sobreocupado;
+- `4`: no trabajó en la semana de referencia;
+- `9`: Ns/Nr.
+
+La sobreocupación se asocia a jornadas superiores a 45 horas semanales. La consistencia horas × `INTENSI` fue verificada para los 13 períodos.
+
+No se presenta una concordancia externa numérica de sobreocupación por aglomerado porque la referencia utilizada no publica un valor compatible con ese nivel de desagregación.
 
 ## Validación metodológica contra INDEC
 
-Las tasas principales fueron contrastadas con publicaciones oficiales del INDEC para 9 trimestres consecutivos, desde `2024T1` hasta `2026T1`. Se compararon actividad, empleo y desocupación: **27 de 27 comparaciones concordaron** al nivel de redondeo de una cifra decimal utilizado en los informes verificados.
+Las tasas principales fueron contrastadas con publicaciones oficiales del INDEC para 9 trimestres consecutivos, desde `2024T1` hasta `2026T1`. Se compararon actividad, empleo y desocupación: **27 de 27 comparaciones concordaron** al nivel de redondeo de una cifra decimal utilizado en los informes verificados. La presión laboral agrega **52/52 concordancias** entre `2023T1` y `2026T1`.
 
 La evidencia se conserva en `docs/validacion_metodologica_indec.csv` y puede regenerarse con:
 
@@ -84,15 +129,15 @@ Esta concordancia demuestra reproducción de los valores publicados en el conjun
 
 ## Alcance inferencial
 
-La EPH es una encuesta por muestreo. La V3.4.0 no estima errores estándar, intervalos de confianza ni pruebas de hipótesis asociadas al diseño muestral. Una diferencia entre períodos o grupos puede describirse en puntos porcentuales, pero no debe interpretarse automáticamente como estadísticamente significativa. El sistema tampoco atribuye causalidad.
+La EPH es una encuesta por muestreo. La V3.5.0 no estima errores estándar, intervalos de confianza ni pruebas de hipótesis asociadas al diseño muestral. Una diferencia entre períodos o grupos puede describirse en puntos porcentuales, pero no debe interpretarse automáticamente como estadísticamente significativa. El sistema tampoco atribuye causalidad.
 
 ## Alcance territorial
 
-El proyecto se mantiene centrado en el **Aglomerado 18 — Santiago del Estero–La Banda**. Los microdatos públicos no permiten separar ambas ciudades. La comparación con NOA o con el total de aglomerados no forma parte del cierre V3.4.0.
+El proyecto se mantiene centrado en el **Aglomerado 18 — Santiago del Estero–La Banda**. Los microdatos públicos no permiten separar ambas ciudades. La comparación con NOA o con el total de aglomerados no forma parte del cierre V3.5.0.
 
 ## Punto técnico pendiente: `REALIZADA`
 
-El pipeline conserva un control interno denominado `tasa_no_respuesta_hogar` que actualmente busca `REALIZADA = 0`. La documentación de diseño de registro utilizada por el proyecto identifica `REALIZADA = 1` como entrevista realizada y `REALIZADA = 2` como no realizada. Por lo tanto, este control debe revisarse antes de utilizarse o comunicarse como indicador de no respuesta de hogares. No afecta las 27 comparaciones de actividad, empleo y desocupación validadas contra INDEC.
+El pipeline conserva un control interno denominado `tasa_no_respuesta_hogar` que actualmente busca `REALIZADA = 0`. La documentación de diseño de registro utilizada por el proyecto identifica `REALIZADA = 1` como entrevista realizada y `REALIZADA = 2` como no realizada. Por lo tanto, este control debe revisarse antes de utilizarse o comunicarse como indicador de no respuesta de hogares. No afecta las 27 comparaciones de tasas principales ni las 52 comparaciones de presión laboral.
 
 ## Otras limitaciones
 
@@ -102,4 +147,11 @@ El pipeline conserva un control interno denominado `tasa_no_respuesta_hogar` que
 
 ## Antecedente documental
 
-`Reporte_Ejecutivo_EPH_SDE_4T2025.pdf` conserva cifras y textos producidos en una etapa anterior. Se mantiene como antecedente histórico y no define la metodología vigente de V3.4.0.
+`Reporte_Ejecutivo_EPH_SDE_4T2025.pdf` conserva cifras y textos producidos en una etapa anterior. Se mantiene como antecedente histórico y no define la metodología vigente de V3.5.0.
+
+
+## Alcance institucional
+
+Los microdatos son producidos por el INDEC. Los indicadores presentados por el proyecto se calculan a partir de esos microdatos.
+
+El estado `VALIDADO` indica que el resultado superó los controles definidos por el proyecto; no equivale a certificación oficial por parte del INDEC ni de la DGEyC.

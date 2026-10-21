@@ -1,5 +1,7 @@
 # Monitor de actualización asistida EPH
 
+**Versión de referencia:** V3.5.0
+
 ## Objetivo
 
 Este módulo complementa el ETL principal con una etapa previa de vigilancia y revisión. Su propósito es detectar si el INDEC publicó un trimestre EPH que todavía no forma parte del histórico local del Aglomerado 18 y, opcionalmente, prevalidarlo antes de incorporarlo.
@@ -129,3 +131,18 @@ python src/pipeline.py --publicar-snapshot
 ## Alcance institucional
 
 El módulo está pensado como apoyo operativo para una Dirección de Estadística: automatiza tareas repetitivas y señala situaciones que merecen revisión, pero conserva la responsabilidad metodológica y de publicación en las personas responsables del proceso.
+
+
+## Relación con V3.5.0
+
+La evolución V3.5.0 no cambia el principio operativo del monitor: detectar y prevalidar continúa separado de publicar.
+
+Cuando un período nuevo se incorpore al histórico, además de los controles generales deberán regenerarse o revisarse, según disponibilidad de referencias:
+
+- tasas principales;
+- presión laboral;
+- horas e intensidad;
+- análisis segmentado y Edad × Nivel educativo;
+- suite automatizada.
+
+El monitor no decide por sí solo que un período sea publicable.

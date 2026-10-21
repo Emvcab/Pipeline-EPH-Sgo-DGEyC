@@ -22,6 +22,9 @@ El pipeline se mantiene en `src/pipeline.py` para facilitar su lectura operativa
 - `ADECOCUR` se utiliza para deciles cuando está disponible.
 - Los faltantes no se imputan ni se sustituyen por cero.
 - Los ingresos son nominales.
+- La presión laboral se calcula sobre la PEA con `PONDERA`: ocupados demandantes (`ESTADO=1` y `PP03J=1`), subocupación (`ESTADO=1` e `INTENSI=1`), subocupación demandante y no demandante.
+- Las horas semanales se construyen como `PP3E_TOT + PP3F_TOT`; `INTENSI=3` identifica sobreocupación.
+- El cruce **Edad × Nivel educativo** reutiliza la capa segmentada y conserva el tamaño muestral visible para evitar lecturas excesivas de grupos pequeños.
 
 `migrar_historico()` renombra las columnas históricas ambiguas y vuelve a calcular las tasas principales desde sus componentes expandidos. La operación es explícita e idempotente.
 
@@ -41,13 +44,13 @@ Los metadatos se generan automáticamente para cada CSV y salida de auditoría. 
 
 ## Snapshot
 
-`preparar_snapshot_desde_historico()` construye en staging un paquete agregado con histórico, indicadores trimestrales, estados, validaciones de esquema, documentación y manifiesto. No copia `base_unida`, ZIP ni microdatos. El directorio vigente se reemplaza sólo cuando el nuevo snapshot completo es válido.
+`preparar_snapshot_desde_historico()` construye en staging un paquete agregado con histórico, indicadores trimestrales, **análisis segmentados**, estados, validaciones de esquema, documentación y manifiesto. No copia `base_unida`, ZIP ni microdatos. El directorio vigente se reemplaza sólo cuando el nuevo snapshot completo es válido.
 
 `publicar_snapshot_validado()` exige que el último período de `results/` esté `VALIDADO` o `PUBLICADO`. Es una preparación local; el despliegue de Streamlit Cloud es una acción externa y separada.
 
-## Dashboard y escalabilidad
+## Portal y escalabilidad
 
-`portal/app.py` es la única aplicación Streamlit y usa rutas relativas. El entorno operativo es Python local desde la raíz del repositorio: las dependencias se preparan con `requirements.txt` y los scripts no instalan paquetes en tiempo de ejecución. La carpeta `notebooks/` contiene artefactos demostrativos Jupyter (`.ipynb`); pueden mostrarse en Colab, pero Colab no forma parte del runtime del pipeline. Los scripts auxiliares de análisis se ubican en `scripts/`. El portal prioriza `results/` sólo si el último período está validado; de lo contrario usa `data_snapshot/`. Los gráficos se construyen desde CSV agregados.
+`portal/app.py` es la única aplicación Streamlit y usa rutas relativas. El entorno operativo es Python local desde la raíz del repositorio: las dependencias se preparan con `requirements.txt` y los scripts no instalan paquetes en tiempo de ejecución. La carpeta `notebooks/` contiene artefactos demostrativos Jupyter (`.ipynb`); pueden mostrarse en Colab, pero Colab no forma parte del runtime del pipeline. Los scripts auxiliares de análisis se ubican en `scripts/`. El portal prioriza `results/` sólo si el último período está validado; de lo contrario usa `data_snapshot/`. Los gráficos se construyen desde CSV agregados. En V3.5.0 el portal conserva además los análisis segmentados necesarios para **Edad × Nivel educativo** y suma la lectura de presión laboral, horas e intensidad sin duplicar el ETL.
 
 Las cargas se distinguen como Crítica, Analítica, Calidad, Auditoría, Operativa, Visualización y Disponibilización. En una etapa posterior pueden agregarse métricas por etapa sin modificar las fórmulas públicas.
 
@@ -106,10 +109,20 @@ Las comparaciones generan alertas orientativas con umbrales configurables para c
 El workflow `.github/workflows/monitor-eph.yml` ejecuta semanalmente sólo la consulta de disponibilidad y conserva el resultado como artefacto de auditoría. También admite ejecución manual. No realiza prevalidación ni publicación automática.
 
 
-## Capa de portal (v3.4)
+## Capa de portal (v3.5)
 
-`portal/app.py` funciona como interfaz de consulta y operación en ocho secciones. Además de calendario y administración, V3.4 incorpora brechas y perfiles, exportación PDF y un bloque de validación metodológica contra INDEC. `src/portal_admin.py` no duplica cálculos: expone el calendario del pipeline, reportes del monitor y una publicación asistida que delega nuevamente en `procesar_trimestre()` y `publicar_snapshot_validado()`. La UI no crea un segundo ETL ni una segunda regla de negocio.
+`portal/app.py` funciona como interfaz de consulta y operación en **nueve secciones**: Resumen ejecutivo, Evolución laboral, Presión laboral, Brechas y perfiles, Ingresos, Calendario, Calidad y auditoría, Documentación y descargas, y Administración.
 
-## Validación metodológica (v3.4)
+La V3.5.0 agrega una capa de lectura pública sobre resultados ya calculados: presión sobre el mercado de trabajo, horas e intensidad laboral, cruce **Edad × Nivel educativo** y textos descriptivos automáticos. Estas funciones consumen salidas del pipeline y del análisis segmentado; no crean un segundo ETL ni redefinen silenciosamente fórmulas.
 
-`src/validacion_metodologica.py` y `scripts/validar_contra_indec.py` separan el contraste externo de la lógica principal. La evidencia versionada en `docs/validacion_metodologica_indec.csv` registra 27/27 concordancias para actividad, empleo y desocupación entre `2024T1` y `2026T1`. La matriz metodológica documenta ponderadores, universos, estados de validación y pendientes. La comparación territorial NOA/total no forma parte del alcance de cierre V3.4.0.
+`src/portal_admin.py` continúa exponiendo calendario, monitor y publicación asistida mediante las mismas funciones centrales del pipeline. La interfaz separa consulta, interpretación y administración.
+
+## Validación metodológica (v3.5)
+
+La validación externa se mantiene separada de la lógica principal:
+
+- `scripts/validar_contra_indec.py`: **27/27 concordancias** para actividad, empleo y desocupación entre `2024T1` y `2026T1`.
+- `scripts/validar_presion_laboral_indec.py`: **52/52 concordancias** para ocupados demandantes, subocupación, subocupación demandante y subocupación no demandante entre `2023T1` y `2026T1`.
+- `scripts/validar_horas_intensidad.py`: controles de consistencia interna de horas e `INTENSI` para los 13 períodos.
+
+La sobreocupación no se presenta como concordancia externa por aglomerado porque la referencia utilizada no publica un valor compatible con ese nivel de desagregación. La matriz metodológica documenta universos, ponderadores, evidencia y pendientes. La comparación territorial NOA/total continúa fuera de alcance.

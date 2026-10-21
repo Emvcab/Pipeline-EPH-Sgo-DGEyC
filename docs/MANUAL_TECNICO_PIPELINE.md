@@ -1,6 +1,6 @@
 # Manual técnico del pipeline
 
-**Versión del producto / portal:** 3.4.0 · **Motor ETL interno:** 3.2.1 · **Python:** 3.10 o superior
+**Versión del producto / portal:** 3.5.0 · **Motor ETL interno:** 3.2.1 · **Python:** 3.10 o superior
 **Repositorio:** <https://github.com/Emvcab/Pipeline-EPH-Sgo-DGEyC>
 
 Este manual describe la operación técnica del sistema: instalación, ejecución, salidas, validaciones, manejo de fallas y actualización del snapshot. Reemplaza como referencia vigente al manual anterior en formato Word, que describe la estructura de carpetas de una versión previa. Las definiciones de cálculo están en [METODOLOGIA.md](METODOLOGIA.md) y el detalle de columnas en [DICCIONARIO_DATOS.md](DICCIONARIO_DATOS.md).
@@ -100,11 +100,13 @@ Cada corrida escribe un registro con marca de tiempo en `logs/`. Para incorporar
 python -m pytest tests -q
 ```
 
-Resultado esperado al cierre de V3.4.0: **97 passed**. Las pruebas escriben únicamente en directorios temporales del sistema; no tocan `data/`, `results/` ni `data_snapshot/`. Cubren fórmulas e indicadores, migración de nombres de tasas, rangos, metadatos y manifiesto, bloqueo de publicación ante controles fallidos, conservación del snapshot y rutas relativas.
+Resultado esperado al cierre de V3.5.0: **101 passed**. Las pruebas escriben únicamente en directorios temporales del sistema; no tocan `data/`, `results/` ni `data_snapshot/`. Cubren fórmulas e indicadores, migración de nombres de tasas, rangos, metadatos y manifiesto, bloqueo de publicación ante controles fallidos, conservación del snapshot y rutas relativas.
 
-La validación externa puede regenerarse con `python scripts/validar_contra_indec.py`. El archivo versionado registra **27/27 concordancias** para actividad, empleo y desocupación entre `2024T1` y `2026T1`.
+La validación externa principal puede regenerarse con `python scripts/validar_contra_indec.py`. El archivo versionado registra **27/27 concordancias** para actividad, empleo y desocupación entre `2024T1` y `2026T1`.
 
-## 5. Dashboard local
+La V3.5.0 incorpora además `python scripts/validar_presion_laboral_indec.py`, con **52/52 concordancias** para cuatro indicadores de presión laboral entre `2023T1` y `2026T1`. Las horas e intensidad se revisan con `scripts/diagnosticar_horas_trabajadas.py` y `scripts/validar_horas_intensidad.py`.
+
+## 5. Portal local
 
 ```bash
 python -m streamlit run portal/app.py
@@ -180,12 +182,39 @@ Procedimiento para agregar un indicador al pipeline sin romper la coherencia ent
 5. **Agregar pruebas automatizadas** en `tests/test_pipeline.py`: el valor esperado con datos de ejemplo, el caso de variable ausente y el rango válido. Si el indicador es una tasa, incorporarlo a los controles de rango de la validación de publicación.
 6. **Verificar que el indicador llegue al CSV y a su metadata**: aparece solo en las salidas al regenerar; confirmar que el `.meta.json` lo describa con definición, fórmula y unidad (paso 3 mediante).
 7. **Regenerar manifiesto y snapshot**: reprocesar los períodos afectados y ejecutar `--publicar-snapshot` tras la validación, para que histórico, indicadores por período, metadatos y hashes queden coherentes.
-8. **Sumarlo al dashboard solo si tiene utilidad institucional**: el tablero muestra un conjunto reducido a propósito. Un indicador de control interno puede vivir en el CSV y la metadata sin ocupar pantalla.
+8. **Sumarlo al portal solo si tiene utilidad institucional**: el tablero muestra un conjunto reducido a propósito. Un indicador de control interno puede vivir en el CSV y la metadata sin ocupar pantalla.
 9. **Documentar limitaciones metodológicas**: actualizar `METODOLOGIA.md` y `DICCIONARIO_DATOS.md`, incluyendo desde qué período existe el dato, advertencias de interpretación y, si aplica, la nota de nominalidad.
 
 ## 11. Notas operativas
 
 - Las rutas del código son relativas a la raíz del repositorio; el sistema funciona en Windows, Linux y macOS sin ajustes.
-- El dashboard no descarga datos del INDEC ni escribe registros: solo lee archivos ya validados.
-- `requirements.txt` incluye lo necesario para pipeline, tests, análisis y dashboard. En un despliegue, conviene revisar periódicamente la compatibilidad de la versión de Streamlit instalada por la plataforma.
-- El repositorio incluye una configuración de contenedor de desarrollo (`.devcontainer/`) que instala dependencias y levanta el dashboard, útil para GitHub Codespaces.
+- El portal no descarga datos del INDEC ni escribe registros: solo lee archivos ya validados.
+- `requirements.txt` incluye lo necesario para pipeline, tests, análisis y portal. En un despliegue, conviene revisar periódicamente la compatibilidad de la versión de Streamlit instalada por la plataforma.
+- El repositorio incluye una configuración de contenedor de desarrollo (`.devcontainer/`) que instala dependencias y levanta el portal, útil para GitHub Codespaces.
+
+
+## 11. Componentes incorporados en V3.5.0
+
+### Presión laboral
+
+`src/pipeline.py` incorpora el cálculo de ocupados demandantes, subocupación, subocupación demandante y subocupación no demandante. Las tasas utilizan `PONDERA` y la PEA como denominador.
+
+### Horas e intensidad
+
+Las horas semanales se construyen a partir de `PP3E_TOT + PP3F_TOT`. La consistencia con `INTENSI` se valida mediante scripts específicos. La sobreocupación se identifica con `INTENSI = 3`.
+
+### Edad × Nivel educativo
+
+`src/analisis_segmentado.py` incorpora la dimensión `Edad × Nivel educativo`, con grupos de edad 14–29, 30–64 y 65+ y siete niveles educativos. Los archivos históricos se regeneran con:
+
+```bash
+python scripts/generar_segmentados_historicos.py
+```
+
+### Lecturas descriptivas
+
+El portal genera textos descriptivos para evolución laboral, presión, horas, ingresos y perfiles. Esta capa no modifica los cálculos y no atribuye causalidad ni significancia estadística.
+
+### Alcance institucional
+
+`VALIDADO` significa que el resultado superó los controles definidos por el proyecto. No equivale a certificación oficial del INDEC ni de la DGEyC.

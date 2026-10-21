@@ -1,7 +1,7 @@
 # Diccionario de datos
 
 **Fuente:** Encuesta Permanente de Hogares — microdatos públicos del INDEC
-**Ámbito:** Aglomerado 18 — Santiago del Estero - La Banda
+**Ámbito:** Aglomerado 18 — Santiago del Estero–La Banda
 **Ponderadores:** `PONDERA` para tasas/expansiones generales e informalidad; `PONDIIO` para el promedio ponderado de `P21`
 
 ## Histórico e indicadores trimestrales
@@ -37,6 +37,10 @@
 | `tasa_empleo_14_mas` | decimal | ocupados 14+ expandidos / población 14+ expandida × 100 | porcentaje |
 | `tasa_desocupacion_14_mas` | decimal | desocupados 14+ expandidos / PEA 14+ expandida × 100 | porcentaje |
 | `tasa_informalidad` | decimal o nulo | EMPLEO=2 ponderado / EMPLEO válido 1 o 2 ponderado × 100 | porcentaje |
+| `tasa_ocupados_demandantes` | decimal o nulo | Ocupados con `PP03J = 1`, ponderados / PEA ponderada × 100 | porcentaje |
+| `tasa_subocupacion` | decimal o nulo | Ocupados con `INTENSI = 1`, ponderados / PEA ponderada × 100 | porcentaje |
+| `tasa_subocupacion_demandante` | decimal o nulo | Ocupados con `INTENSI = 1` y `PP03J = 1`, ponderados / PEA ponderada × 100 | porcentaje |
+| `tasa_subocupacion_no_demandante` | decimal o nulo | Ocupados con `INTENSI = 1` y `PP03J = 2`, ponderados / PEA ponderada × 100 | porcentaje |
 | `ingreso_promedio_observado` | decimal o nulo | Promedio simple de `P21 > 0` entre ocupados | pesos nominales |
 | `ingreso_mediano_observado` | decimal o nulo | Mediana de `P21 > 0` entre ocupados | pesos nominales |
 | `ingreso_promedio_ponderado_observado` | decimal o nulo | suma(`P21 × PONDIIO`) / suma(`PONDIIO`) con `P21 > 0` y `PONDIIO > 0` | pesos nominales |
@@ -63,7 +67,7 @@
 
 `calidad_datos_SDE_<periodo>.csv` informa por variable: `columna`, `nulos`, `codigo_-9_no_resp`, `codigo_-8`, `codigo_-7`, `validos` y `variable_disponible`. Cuando una variable no existe, sus conteos permanecen nulos. No se reemplazan por cero.
 
-`calidad_snapshot_SDE.csv` contiene controles lógicos agregados cuando el dashboard funciona sin microdatos: población positiva, tasas en rango, complementariedad, duplicados y disponibilidad de informalidad. No reemplaza los conteos detallados del ETL.
+`calidad_snapshot_SDE.csv` contiene controles lógicos agregados cuando el portal funciona sin microdatos: población positiva, tasas en rango, complementariedad, duplicados y disponibilidad de informalidad. No reemplaza los conteos detallados del ETL.
 
 ## Estado de períodos
 
@@ -84,12 +88,12 @@ Todo CSV se acompaña por un archivo homónimo `.meta.json`. Incluye nombre, des
 - El Aglomerado 18 no permite separar Santiago Capital de La Banda.
 - El control interno `tasa_no_respuesta_hogar` utiliza actualmente `REALIZADA = 0`. Debe revisarse antes de interpretarlo como no respuesta, porque la codificación de diseño utilizada por el proyecto identifica 1=realizada y 2=no realizada.
 
-## Salida `analisis_segmentado_SDE_AAAATn.csv` — V3.3
+## Salida `analisis_segmentado_SDE_AAAATn.csv` — V3.5
 
 | Campo | Descripción |
 |---|---|
 | `periodo` | Trimestre en formato `AAAATn`. |
-| `dimension` | Sexo, Edad, Nivel educativo o Decil de ingreso. |
+| `dimension` | Sexo, Edad, Nivel educativo, **Edad × Nivel educativo** o Decil de ingreso. |
 | `categoria` | Categoría analizada dentro de la dimensión. |
 | `universo` | Universo usado para el cálculo del segmento. |
 | `n_muestra` | Registros observados de la muestra en el segmento. |
@@ -101,3 +105,30 @@ Todo CSV se acompaña por un archivo homónimo `.meta.json`. Incluye nombre, des
 | `ingreso_promedio_ponderado_ocupados` | Promedio ponderado de `P21` entre ocupados con ingreso positivo, usando `PONDIIO`. |
 
 Para la dimensión de deciles se utilizan `ADECOCUR` y `PONDIIO` cuando están disponibles. En esos registros las tasas laborales se dejan vacías porque la salida se centra en la distribución del ingreso de la ocupación principal.
+
+
+## Indicadores de horas e intensidad — V3.5
+
+La V3.5.0 incorpora un bloque derivado de `PP3E_TOT`, `PP3F_TOT` e `INTENSI`.
+
+Reglas metodológicas:
+
+- horas semanales totales = `PP3E_TOT + PP3F_TOT`;
+- promedio semanal ponderado entre ocupados con horas válidas;
+- mediana semanal ponderada;
+- sobreocupación: `INTENSI = 3`, asociada a jornadas superiores a 45 horas semanales;
+- tasa de sobreocupación calculada sobre la PEA.
+
+Los nombres exactos de las columnas generadas por una corrida deben consultarse en `historico_SDE.csv` y en su archivo `.meta.json`, que constituyen la referencia de esquema de cada snapshot publicado. Esta sección documenta la definición metodológica y evita fijar nombres si cambian de manera explícita en una futura migración.
+
+## Tamaño muestral en Edad × Nivel educativo
+
+La V3.5.0 conserva `n_muestra` y `poblacion_expandida` para cada combinación.
+
+Ayudas de lectura del portal:
+
+- `n < 10`: muestra muy reducida; se mantiene visible, pero se excluye de máximos y mínimos automáticos;
+- `10–29`: muestra reducida;
+- `n >= 30`: base muestral más amplia.
+
+Estos umbrales son ayudas operativas de lectura y **no constituyen reglas oficiales de precisión estadística del INDEC**.

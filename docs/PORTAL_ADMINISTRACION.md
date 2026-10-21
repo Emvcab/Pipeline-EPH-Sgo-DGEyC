@@ -2,7 +2,7 @@
 
 ## Objetivo
 
-La capa administrativa se incorporó en V3.2 y se mantiene vigente en V3.4.0. El portal conserva las vistas públicas de indicadores y agrega:
+La capa administrativa se incorporó en V3.2 y se mantiene vigente en V3.5.0. El portal conserva las vistas públicas de indicadores y agrega:
 
 - calendario de fechas esperadas y estado local de cada trimestre;
 - consulta manual de nuevas publicaciones en INDEC;
@@ -16,14 +16,15 @@ La lógica estadística no se duplica: el portal llama a las mismas funciones de
 
 ## Secciones del portal
 
-1. **Resumen ejecutivo**: indicadores del período elegido y comparación descriptiva con otro trimestre.
-2. **Evolución laboral**: series interactivas de actividad, empleo, desocupación, inactividad e informalidad.
-3. **Brechas y perfiles**: sexo, edad, nivel educativo y deciles de ingreso.
-4. **Ingresos**: indicadores nominales y advertencias de interpretación.
-5. **Calendario**: fecha esperada, estado y próximo período.
-6. **Calidad y auditoría**: estados, esquema, calidad, validaciones y contraste metodológico 27/27 contra INDEC.
-7. **Documentación y descargas**: histórico, metadatos, manifiesto, evidencia metodológica y guías.
-8. **Administración**: monitor, prevalidación y publicación controlada.
+1. **Resumen ejecutivo**: indicadores del período elegido, comparación descriptiva y explicación pedagógica.
+2. **Evolución laboral**: series interactivas y lectura descriptiva temporal.
+3. **Presión laboral**: ocupados demandantes, subocupación y horas e intensidad.
+4. **Brechas y perfiles**: sexo, edad, nivel educativo, Edad × Nivel educativo y deciles de ingreso.
+5. **Ingresos**: indicadores nominales y advertencias de interpretación.
+6. **Calendario**: fecha esperada, estado y próximo período.
+7. **Calidad y auditoría**: estados, esquema, calidad, 27/27 de tasas principales y 52/52 de presión laboral.
+8. **Documentación y descargas**: histórico, metadatos, manifiesto, evidencia metodológica y guías.
+9. **Administración**: monitor, prevalidación y publicación controlada.
 
 ## Seguridad del MVP
 
@@ -87,3 +88,10 @@ En servicios con sistema de archivos efímero, como ciertos despliegues administ
 ## Alcance de la autenticación
 
 La clave del portal es una protección adecuada para el MVP académico/institucional. Para una adopción productiva multiusuario se recomienda reemplazarla por autenticación corporativa (SSO/OIDC), roles y auditoría de usuario.
+
+
+## Alcance institucional en V3.5.0
+
+La interfaz utiliza la palabra `VALIDADO` para indicar que un resultado superó los controles definidos por el proyecto. No implica certificación oficial del INDEC ni de la DGEyC.
+
+La publicación institucional formal requiere una decisión y autorización externas al software.
