@@ -76,7 +76,7 @@ def colores_para_categorias(categorias: list[str]) -> list[str]:
 
 
 def leer_json(ruta: Path) -> dict | None:
-    """Lee JSON sin interrumpir el dashboard si falta o está dañado."""
+    """Lee JSON sin interrumpir el portal si falta o está dañado."""
     try:
         return json.loads(ruta.read_text(encoding="utf-8")) if ruta.exists() else None
     except (OSError, json.JSONDecodeError):
@@ -151,6 +151,90 @@ def delta_pp(actual: object, anterior: object, periodo_anterior: str | None) -> 
     if cambio is None or not periodo_anterior:
         return None
     return f"{cambio:+.2f} p.p. vs {periodo_anterior}"
+def lectura_serie_temporal(
+    datos: pd.DataFrame,
+    columna: str,
+    etiqueta: str,
+    *,
+    porcentaje: bool = False,
+    moneda: bool = False,
+) -> str | None:
+    """
+    Resume descriptivamente una serie entre el primer y último
+    período disponible, e informa sus valores máximo y mínimo.
+    """
+    if columna not in datos.columns or "periodo" not in datos.columns:
+        return None
+
+    serie = datos[["periodo", columna]].copy()
+
+    serie[columna] = pd.to_numeric(
+        serie[columna],
+        errors="coerce",
+    )
+
+    serie = serie.dropna(subset=[columna])
+
+    if serie.empty:
+        return None
+
+    primero = serie.iloc[0]
+    ultimo = serie.iloc[-1]
+
+    valor_inicial = float(primero[columna])
+    valor_final = float(ultimo[columna])
+
+    periodo_inicial = str(primero["periodo"])
+    periodo_final = str(ultimo["periodo"])
+
+    fila_max = serie.loc[serie[columna].idxmax()]
+    fila_min = serie.loc[serie[columna].idxmin()]
+
+    valor_max = float(fila_max[columna])
+    valor_min = float(fila_min[columna])
+
+    periodo_max = str(fila_max["periodo"])
+    periodo_min = str(fila_min["periodo"])
+
+    diferencia = valor_final - valor_inicial
+
+    if porcentaje:
+        return (
+            f"{etiqueta}: pasó de {valor_inicial:.2f}% en "
+            f"{periodo_inicial} a {valor_final:.2f}% en {periodo_final} "
+            f"({diferencia:+.2f} p.p.). "
+            f"En el rango seleccionado, el máximo observado fue "
+            f"{valor_max:.2f}% en {periodo_max} y el mínimo "
+            f"{valor_min:.2f}% en {periodo_min}."
+        )
+
+    if moneda:
+        variacion_porcentual = (
+            ((valor_final / valor_inicial) - 1) * 100
+            if valor_inicial != 0
+            else None
+        )
+
+        texto_variacion = (
+            f"{variacion_porcentual:+.1f}% nominal"
+            if variacion_porcentual is not None
+            else "variación porcentual no disponible"
+        )
+
+        return (
+            f"{etiqueta}: pasó de ${valor_inicial:,.0f} en "
+            f"{periodo_inicial} a ${valor_final:,.0f} en {periodo_final} "
+            f"({texto_variacion}). "
+            f"El máximo observado fue ${valor_max:,.0f} en {periodo_max} "
+            f"y el mínimo ${valor_min:,.0f} en {periodo_min}."
+        )
+
+    return (
+        f"{etiqueta}: pasó de {valor_inicial:.2f} en {periodo_inicial} "
+        f"a {valor_final:.2f} en {periodo_final}. "
+        f"Máximo observado: {valor_max:.2f} en {periodo_max}; "
+        f"mínimo: {valor_min:.2f} en {periodo_min}."
+    )
 
 
 def grafico_series_interactivo(
@@ -340,11 +424,11 @@ if DIR_ACTIVO is None:
 
 if USANDO_SNAPSHOT:
     st.info(
-        "El tablero está usando el snapshot agregado y validado. No necesita ZIP ni "
-        "microdatos individuales para funcionar."
+        "El portal está usando una versión agregada y validada de los datos. "
+        "No necesita los archivos ZIP ni los microdatos individuales para funcionar."
     )
 else:
-    st.success("El tablero está usando resultados locales validados.")
+    st.success("El portal está usando resultados locales validados.")
 
 historico = leer_csv(DIR_ACTIVO / "historico_SDE.csv")
 estados = leer_csv(DIR_ACTIVO / "estado_periodos.csv")
@@ -358,7 +442,7 @@ historico["periodo"] = historico["periodo"].map(normalizar_periodo)
 estados["periodo"] = estados["periodo"].map(normalizar_periodo)
 estados["estado"] = estados["estado"].map(normalizar_estado)
 if historico["periodo"].isna().any() or estados["periodo"].isna().any():
-    st.error("Hay períodos fuera del formato canónico YYYYTx en los archivos del dashboard.")
+    st.error("Hay períodos fuera del formato canónico YYYYTx en los archivos del portal.")
     st.stop()
 
 periodos_validos = set(
@@ -400,6 +484,64 @@ estado_ultimo = estados.loc[estados["periodo"].astype(str) == periodo_ultimo].il
 
 with tab_resumen:
     st.header("Resumen ejecutivo")
+    st.caption(
+        "Una síntesis del mercado de trabajo del aglomerado "
+        "Santiago del Estero–La Banda a partir de los microdatos de la EPH."
+    )
+
+    with st.expander("¿Cómo leer estos indicadores?", expanded=False):
+        st.markdown(
+            """
+            **Actividad:** porcentaje de la población de 14 años y más que
+            trabaja o busca trabajo.
+
+            **Empleo:** porcentaje de la población de 14 años y más que está
+            ocupada.
+
+            **Desocupación:** porcentaje de la población económicamente activa
+            que no tiene trabajo, está disponible y lo busca activamente.
+
+            **Inactividad:** personas que no están ocupadas ni buscan
+            activamente trabajo.
+
+            **¿Qué significa estar ocupado?** En la EPH una persona puede ser
+            considerada ocupada si trabajó al menos una hora durante la semana
+            de referencia, o si tenía trabajo pero estuvo temporalmente ausente.
+
+            **Población expandida:** es la estimación de cuántas personas de la
+            población representa la muestra relevada.
+
+            Los resultados provienen de una encuesta por muestreo. Por eso deben
+            interpretarse como estimaciones y no como un conteo completo de la
+            población.
+            """
+        )
+    with st.expander("¿Cómo leer este portal?", expanded=False):
+        st.markdown(
+            """
+            Este portal transforma los microdatos de la Encuesta Permanente de Hogares
+            (EPH) en indicadores del mercado de trabajo para el aglomerado
+            **Santiago del Estero–La Banda**.
+
+            **Actividad:** qué proporción de la población de 14 años y más trabaja
+            o busca trabajo.
+
+            **Empleo:** qué proporción de la población de 14 años y más está ocupada.
+
+            **Desocupación:** qué proporción de la población económicamente activa
+            no tiene trabajo y lo busca activamente.
+
+            **Ocupado:** en la EPH, una persona puede ser considerada ocupada si
+            trabajó al menos una hora durante la semana de referencia o si tenía
+            trabajo pero estuvo temporalmente ausente.
+
+            **Población expandida:** estimación de cuántas personas de la población
+            representa la muestra relevada.
+
+            Los resultados deben interpretarse como estimaciones provenientes de
+            una encuesta por muestreo y no como un conteo completo de la población.
+            """
+        )
     a, b, c = st.columns(3)
     a.metric("Último período validado", periodo_ultimo)
     b.metric("Estado de validación", str(estado_ultimo["estado"]))
@@ -435,7 +577,7 @@ with tab_resumen:
 
     c1, c2, c3, c4 = st.columns(4)
     c1.metric(
-        "Tasa de actividad oficial",
+        "Tasa de actividad",
         formato_tasa(referencia.get("tasa_actividad_oficial")),
         delta=delta_pp(
             referencia.get("tasa_actividad_oficial"),
@@ -444,7 +586,7 @@ with tab_resumen:
         ),
     )
     c2.metric(
-        "Tasa de empleo oficial",
+        "Tasa de empleo",
         formato_tasa(referencia.get("tasa_empleo_oficial")),
         delta=delta_pp(
             referencia.get("tasa_empleo_oficial"),
@@ -463,7 +605,7 @@ with tab_resumen:
         delta_color="inverse",
     )
     c4.metric(
-        "Proporción inactiva total",
+        "Proporción inactiva",
         formato_tasa(referencia.get("proporcion_inactiva_total")),
         delta=delta_pp(
             referencia.get("proporcion_inactiva_total"),
@@ -558,7 +700,7 @@ with tab_evolucion:
             "tasa_actividad_oficial": "Actividad",
             "tasa_empleo_oficial": "Empleo",
         },
-        "Actividad y empleo oficiales",
+        "Actividad y empleo",
         "Porcentaje",
         porcentaje=True,
     )
@@ -604,6 +746,59 @@ with tab_evolucion:
         "no está disponible. Por ese motivo, el indicador se presenta como no disponible "
         "y no se realiza imputación ni se reemplazan faltantes por cero."
     )
+    mensajes_evolucion = []
+
+    indicadores_evolucion = [
+        (
+            "tasa_actividad_oficial",
+            "Actividad",
+        ),
+        (
+            "tasa_empleo_oficial",
+            "Empleo",
+        ),
+        (
+            "tasa_desocupacion",
+            "Desocupación",
+        ),
+        (
+            "proporcion_inactiva_total",
+            "Inactividad",
+        ),
+        (
+            "tasa_informalidad",
+            "Informalidad",
+        ),
+    ]
+
+    for columna, etiqueta in indicadores_evolucion:
+        mensaje = lectura_serie_temporal(
+            df_evol,
+            columna,
+            etiqueta,
+            porcentaje=True,
+        )
+
+        if mensaje:
+            mensajes_evolucion.append(mensaje)
+
+    if mensajes_evolucion:
+        with st.expander(
+            "Lectura descriptiva del período seleccionado",
+            expanded=True,
+        ):
+            st.markdown(
+                "\n\n".join(
+                    f"- {mensaje}"
+                    for mensaje in mensajes_evolucion
+                )
+            )
+
+            st.caption(
+                "La lectura resume las variaciones observadas en el rango "
+                "seleccionado. No implica causalidad ni, por sí sola, "
+                "significancia estadística."
+            )
 
 with tab_presion:
     st.header("Presión sobre el mercado de trabajo")
@@ -954,6 +1149,62 @@ pero no están buscando activamente otra ocupación.
             "Porcentaje de la PEA",
             porcentaje=True,
         )
+        mensajes_presion = []
+
+        indicadores_presion_lectura = [
+            (
+                "tasa_ocupados_demandantes",
+                "Ocupados demandantes",
+            ),
+            (
+                "tasa_subocupacion",
+                "Subocupación horaria",
+            ),
+            (
+                "tasa_subocupacion_demandante",
+                "Subocupación demandante",
+            ),
+            (
+                "tasa_subocupacion_no_demandante",
+                "Subocupación no demandante",
+            ),
+        ]
+
+        for columna, etiqueta in indicadores_presion_lectura:
+            mensaje = lectura_serie_temporal(
+                df_presion,
+                columna,
+                etiqueta,
+                porcentaje=True,
+            )
+
+            if mensaje:
+                mensajes_presion.append(mensaje)
+
+        if mensajes_presion:
+            with st.expander(
+                "Lectura descriptiva de la presión laboral",
+                expanded=True,
+            ):
+                st.markdown(
+                    "\n\n".join(
+                        f"- {mensaje}"
+                        for mensaje in mensajes_presion
+                    )
+                )
+
+                st.info(
+                    "Una tasa de desocupación baja no resume por sí sola "
+                    "toda la presión sobre el mercado laboral. También existen "
+                    "personas que ya están ocupadas pero buscan otro empleo o "
+                    "desean trabajar más horas."
+                )
+
+                st.caption(
+                    "Las variaciones son descriptivas y se refieren al rango "
+                    "temporal seleccionado. No implican causalidad ni, por sí "
+                    "solas, significancia estadística."
+                )
         st.subheader("Evolución de horas e intensidad")
 
         columnas_historicas_horas = [
@@ -1015,6 +1266,64 @@ pero no están buscando activamente otra ocupación.
                 "por lo que no se presenta como una concordancia numérica "
                 "externa contra INDEC."
             )
+            mensajes_horas = []
+
+            for columna, etiqueta in [
+                (
+                    "promedio_horas_semanales_ponderado",
+                    "Promedio semanal de horas trabajadas",
+                ),
+                (
+                    "mediana_horas_semanales_ponderada",
+                    "Mediana semanal de horas trabajadas",
+                ),
+            ]:
+                mensaje = lectura_serie_temporal(
+                    df_presion,
+                    columna,
+                    etiqueta,
+                )
+
+                if mensaje:
+                    mensajes_horas.append(mensaje)
+
+            mensaje_sobreocupacion = lectura_serie_temporal(
+                df_presion,
+                "tasa_sobreocupacion_horaria",
+                "Sobreocupación horaria",
+                porcentaje=True,
+            )
+
+            if mensaje_sobreocupacion:
+                mensajes_horas.append(
+                    mensaje_sobreocupacion
+                )
+
+            if mensajes_horas:
+                with st.expander(
+                    "Lectura descriptiva de horas e intensidad",
+                    expanded=True,
+                ):
+                    st.markdown(
+                        "\n\n".join(
+                            f"- {mensaje}"
+                            for mensaje in mensajes_horas
+                        )
+                    )
+
+                    st.info(
+                        "Las horas promedio y medianas describen la duración "
+                        "semanal del trabajo entre las personas ocupadas que "
+                        "trabajaron al menos una hora. La sobreocupación permite "
+                        "observar, en cambio, la proporción de la PEA asociada "
+                        "a jornadas superiores a 45 horas semanales."
+                    )
+
+                    st.caption(
+                        "La lectura resume cambios observados en el rango "
+                        "seleccionado. Es descriptiva y no implica causalidad "
+                        "ni significancia estadística."
+                    )
 
         else:
             st.info(
@@ -1574,7 +1883,45 @@ with tab_ingresos:
         moneda=True,
     )
 
+    mensajes_ingresos = []
 
+    for columna, etiqueta in [
+        (
+            "ingreso_promedio_ponderado_observado",
+            "Ingreso promedio ponderado",
+        ),
+        (
+            "ingreso_mediano_observado",
+            "Ingreso mediano",
+        ),
+    ]:
+        mensaje = lectura_serie_temporal(
+            df_ing,
+            columna,
+            etiqueta,
+            moneda=True,
+        )
+
+        if mensaje:
+            mensajes_ingresos.append(mensaje)
+
+    if mensajes_ingresos:
+        with st.expander(
+            "Lectura descriptiva de los ingresos",
+            expanded=True,
+        ):
+            st.markdown(
+                "\n\n".join(
+                    f"- {mensaje}"
+                    for mensaje in mensajes_ingresos
+                )
+            )
+
+            st.warning(
+                "Las variaciones son nominales. Un aumento del ingreso "
+                "en pesos no implica necesariamente una mejora del poder "
+                "adquisitivo; para eso sería necesario ajustar por inflación."
+            )
 with tab_calendario:
     st.header("Calendario de publicaciones EPH")
     st.caption(
