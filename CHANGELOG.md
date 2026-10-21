@@ -1,5 +1,63 @@
 # Historial de cambios
 
+## V3.5.0 — Evolución del análisis laboral
+
+### Agregado — presión sobre el mercado de trabajo
+
+- Se incorporan los indicadores de **ocupados demandantes**, **subocupación horaria**, **subocupación demandante** y **subocupación no demandante**.
+- Las tasas se calculan sobre la **Población Económicamente Activa (PEA)** utilizando `PONDERA`.
+- Se incorpora una referencia histórica oficial para Santiago del Estero–La Banda entre 2023T1 y 2026T1.
+- La validación externa alcanza **52 de 52 concordancias**: 13 períodos × 4 indicadores.
+- Se agrega una sección específica de **Presión laboral** en el portal.
+
+### Agregado — horas trabajadas e intensidad laboral
+
+- Se incorporan las horas semanales de trabajo a partir de `PP3E_TOT + PP3F_TOT`.
+- Se calculan el **promedio ponderado**, la **mediana ponderada** y la **tasa de sobreocupación horaria**.
+- La sobreocupación se identifica mediante `INTENSI = 3` y corresponde a jornadas superiores a 45 horas semanales.
+- Se agregan controles internos de consistencia entre horas trabajadas e intensidad laboral para los 13 períodos.
+- La sobreocupación se presenta como una construcción validada internamente; no se declara concordancia numérica externa por aglomerado cuando la publicación de referencia no ofrece ese indicador.
+
+### Agregado — Edad × Nivel educativo
+
+- El análisis segmentado incorpora el cruce **Edad × Nivel educativo**.
+- Se utilizan tres grupos de edad: 14 a 29 años, 30 a 64 años y 65 años y más.
+- Se conservan los siete niveles educativos disponibles en los microdatos.
+- El histórico segmentado fue regenerado para 2023T1–2026T1.
+- El portal incorpora una matriz visual para explorar actividad, empleo, desocupación e informalidad según edad y educación.
+- Se muestra el tamaño de muestra de cada combinación y se agregan advertencias para bases reducidas.
+- Las categorías con menos de 10 casos permanecen visibles, pero no participan en la identificación automática de máximos y mínimos.
+
+### Mejorado — experiencia de uso y lectura pública
+
+- Se simplifica el lenguaje del portal para usuarios no técnicos.
+- Se incorporan explicaciones pedagógicas sobre actividad, empleo, desocupación, ocupación, PEA y población expandida.
+- Se agregan **lecturas descriptivas automáticas** en evolución laboral, presión laboral, horas e intensidad, ingresos y análisis segmentados.
+- Las lecturas responden a los períodos seleccionados por el usuario y distinguen descripción estadística de causalidad o significancia estadística.
+- En ingresos se aclara que las variaciones son nominales y no representan directamente cambios en poder adquisitivo.
+- Se uniformiza la presentación de valores no disponibles.
+
+### Mejorado — alcance metodológico e institucional
+
+- Se explicita que la fuente de los microdatos es la **Encuesta Permanente de Hogares (EPH) del INDEC**.
+- Se aclara que los indicadores del portal son calculados por este proyecto a partir de los microdatos públicos.
+- Se define el alcance territorial como **Aglomerado 18 — Santiago del Estero–La Banda**, sin extender los resultados al total provincial.
+- Se documenta qué significa el estado **VALIDADO** dentro del proyecto.
+- Se aclara que una validación del pipeline no constituye certificación oficial por parte del INDEC ni de la DGEyC.
+- El portal se presenta como herramienta técnica y analítica y no como una publicación oficial institucional sin la autorización correspondiente.
+
+### Validación
+
+- Se mantienen **27 de 27 concordancias externas** para las principales tasas laborales.
+- Se alcanzan **52 de 52 concordancias externas** para los cuatro indicadores de presión laboral.
+- La suite automatizada alcanza **101 pruebas aprobadas**.
+- El análisis Edad × Nivel educativo fue verificado en los 13 períodos del histórico.
+- Las validaciones de horas e intensidad no presentan inconsistencias en los controles implementados.
+
+### Versión
+
+- `PORTAL_VERSION` pasa de `3.5.0-dev` a `3.5.0`.
+
 ## 3.4.0 — 2026-10-14
 
 ### Cierre metodológico
