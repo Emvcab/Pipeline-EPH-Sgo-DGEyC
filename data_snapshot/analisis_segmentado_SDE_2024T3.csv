@@ -1,4 +1,4 @@
-periodo,dimension,categoria,universo,n_muestra,poblacion_expandida,tasa_actividad,tasa_empleo,tasa_desocupacion,tasa_informalidad,ingreso_promedio_ponderado_ocupados
+﻿periodo,dimension,categoria,universo,n_muestra,poblacion_expandida,tasa_actividad,tasa_empleo,tasa_desocupacion,tasa_informalidad,ingreso_promedio_ponderado_ocupados
 2024T3,Sexo,Varón,Población de 14 años y más,572,160606,64.14,63.43,1.1,59.68,367515.0
 2024T3,Sexo,Mujer,Población de 14 años y más,644,178678,41.68,41.38,0.72,50.73,326830.0
 2024T3,Edad,14 a 29 años,Grupo de edad,405,111795,38.09,37.27,2.14,80.56,228959.0
@@ -11,6 +11,26 @@ periodo,dimension,categoria,universo,n_muestra,poblacion_expandida,tasa_activida
 2024T3,Nivel educativo,Superior/universitario incompleto,Población de 14 años y más,153,43487,46.57,46.03,1.15,50.36,393770.0
 2024T3,Nivel educativo,Superior/universitario completo,Población de 14 años y más,171,51216,74.31,74.31,0.0,12.7,519501.0
 2024T3,Nivel educativo,Sin instrucción,Población de 14 años y más,10,2837,67.96,67.96,0.0,100.0,114775.0
+2024T3,Edad × Nivel educativo,14 a 29 años · Primario incompleto,Población de 14 años y más por grupo de edad y nivel educativo,17,4066,39.72,34.36,13.5,100.0,139840.0
+2024T3,Edad × Nivel educativo,14 a 29 años · Primario completo,Población de 14 años y más por grupo de edad y nivel educativo,22,7886,75.81,75.81,0.0,97.52,136393.0
+2024T3,Edad × Nivel educativo,14 a 29 años · Secundario incompleto,Población de 14 años y más por grupo de edad y nivel educativo,198,52631,23.16,22.75,1.77,98.52,181031.0
+2024T3,Edad × Nivel educativo,14 a 29 años · Secundario completo,Población de 14 años y más por grupo de edad y nivel educativo,71,18956,66.22,64.93,1.95,85.25,224366.0
+2024T3,Edad × Nivel educativo,14 a 29 años · Superior/universitario incompleto,Población de 14 años y más por grupo de edad y nivel educativo,81,22660,23.68,22.66,4.32,65.95,233442.0
+2024T3,Edad × Nivel educativo,14 a 29 años · Superior/universitario completo,Población de 14 años y más por grupo de edad y nivel educativo,14,5127,95.12,95.12,0.0,13.68,485669.0
+2024T3,Edad × Nivel educativo,14 a 29 años · Sin instrucción,Población de 14 años y más por grupo de edad y nivel educativo,2,469,0.0,0.0,,,
+2024T3,Edad × Nivel educativo,30 a 64 años · Primario incompleto,Población de 14 años y más por grupo de edad y nivel educativo,42,12220,48.57,48.57,0.0,82.12,233125.0
+2024T3,Edad × Nivel educativo,30 a 64 años · Primario completo,Población de 14 años y más por grupo de edad y nivel educativo,107,35233,59.82,59.19,1.06,80.46,259698.0
+2024T3,Edad × Nivel educativo,30 a 64 años · Secundario incompleto,Población de 14 años y más por grupo de edad y nivel educativo,113,29255,67.93,67.93,0.0,70.17,296174.0
+2024T3,Edad × Nivel educativo,30 a 64 años · Secundario completo,Población de 14 años y más por grupo de edad y nivel educativo,177,46306,75.23,74.07,1.54,43.85,415138.0
+2024T3,Edad × Nivel educativo,30 a 64 años · Superior/universitario incompleto,Población de 14 años y más por grupo de edad y nivel educativo,68,19728,75.45,75.45,0.0,44.98,448650.0
+2024T3,Edad × Nivel educativo,30 a 64 años · Superior/universitario completo,Población de 14 años y más por grupo de edad y nivel educativo,128,36551,89.14,89.14,0.0,11.65,524103.0
+2024T3,Edad × Nivel educativo,30 a 64 años · Sin instrucción,Población de 14 años y más por grupo de edad y nivel educativo,8,2368,81.42,81.42,0.0,100.0,114775.0
+2024T3,Edad × Nivel educativo,65 años y más · Primario incompleto,Población de 14 años y más por grupo de edad y nivel educativo,17,3839,5.34,5.34,0.0,0.0,200000.0
+2024T3,Edad × Nivel educativo,65 años y más · Primario completo,Población de 14 años y más por grupo de edad y nivel educativo,50,12075,12.76,12.76,0.0,49.06,277029.0
+2024T3,Edad × Nivel educativo,65 años y más · Secundario incompleto,Población de 14 años y más por grupo de edad y nivel educativo,14,3959,28.21,28.21,0.0,50.04,473008.0
+2024T3,Edad × Nivel educativo,65 años y más · Secundario completo,Población de 14 años y más por grupo de edad y nivel educativo,54,15318,2.17,2.17,0.0,0.0,250000.0
+2024T3,Edad × Nivel educativo,65 años y más · Superior/universitario incompleto,Población de 14 años y más por grupo de edad y nivel educativo,4,1099,0.0,0.0,,,
+2024T3,Edad × Nivel educativo,65 años y más · Superior/universitario completo,Población de 14 años y más por grupo de edad y nivel educativo,29,9538,6.32,6.32,0.0,61.19,561491.0
 2024T3,Decil de ingreso,Decil 1,Ocupados con P21 > 0; ADECOCUR del aglomerado,55,17579,,,,,71173.0
 2024T3,Decil de ingreso,Decil 2,Ocupados con P21 > 0; ADECOCUR del aglomerado,68,19195,,,,,112019.0
 2024T3,Decil de ingreso,Decil 3,Ocupados con P21 > 0; ADECOCUR del aglomerado,59,15879,,,,,169129.0

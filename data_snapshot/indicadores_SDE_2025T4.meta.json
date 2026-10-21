@@ -10,7 +10,7 @@
   "periodo": "2025T4",
   "anio": 2025,
   "trimestre": 4,
-  "fecha_hora_generacion": "2026-10-15T07:10:29",
+  "fecha_hora_generacion": "2026-10-20T22:17:42",
   "version_pipeline": "3.2.1",
   "filas": 1,
   "columnas": 52,
@@ -326,8 +326,8 @@
   ],
   "ingresos_nominales": true,
   "estado_validacion": "VALIDADO",
-  "ultima_ejecucion_exitosa": "2026-10-15T07:10:29",
+  "ultima_ejecucion_exitosa": "2026-10-20T22:17:42",
   "archivo_origen": "historico_SDE.csv",
-  "identificador_ejecucion": "b94ecf1a808ee49a",
-  "hash_sha256": "5d0abcc07bca22a33fb2ca14d853f1dcf35f62c5bd4aacbdbba31fce13325cfb"
+  "identificador_ejecucion": "3d95ef590bdbc9aa",
+  "hash_sha256": "55cfb2f79ad216da9b82b83a8611d6521ec7b2346d1f9fd4f9513fbfa22a6feb"
 }

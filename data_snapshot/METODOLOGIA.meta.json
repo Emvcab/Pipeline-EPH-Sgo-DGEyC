@@ -10,12 +10,12 @@
   "periodo": null,
   "anio": null,
   "trimestre": null,
-  "fecha_hora_generacion": "2026-10-15T07:10:29",
+  "fecha_hora_generacion": "2026-10-20T22:17:43",
   "version_pipeline": "3.2.1",
   "estado_validacion": "VALIDADO",
-  "ultima_ejecucion_exitosa": "2026-10-15T07:10:29",
+  "ultima_ejecucion_exitosa": "2026-10-20T22:17:43",
   "archivo_origen": "METODOLOGIA.md",
-  "identificador_ejecucion": "4b366f84f6af8ae2",
+  "identificador_ejecucion": "629f62b33d0ae72f",
   "hash_sha256": "cf60765425d3acebed7e152ce1ff13e9a0c8e3d487ddaed4064e3b039dcf9c3e",
   "advertencias_metodologicas": [
     "El aglomerado 18 no permite separar Santiago Capital de La Banda."

@@ -18,7 +18,7 @@
     "opcionales_faltantes": [
       "EMPLEO"
     ],
-    "fecha_validacion": "2026-10-15T07:00:36"
+    "fecha_validacion": "2026-10-20T22:05:48"
   },
   "hogar": {
     "periodo": "2023T2",
@@ -33,6 +33,6 @@
     ],
     "obligatorias_faltantes": [],
     "opcionales_faltantes": [],
-    "fecha_validacion": "2026-10-15T07:00:36"
+    "fecha_validacion": "2026-10-20T22:05:48"
   }
 }
