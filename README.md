@@ -1,43 +1,52 @@
-# Pipeline EPH — Santiago del Estero
+# Pipeline EPH — Santiago del Estero–La Banda
 
-**Versión del producto / portal:** `3.4.0` (cierre metodológico)  
+**Versión del producto / portal:** `3.5.0` (evolución del análisis laboral)  
 **Versión interna del motor ETL:** `3.2.1` (identificador técnico conservado por compatibilidad)
 
-Sistema para descargar, integrar, validar y calcular indicadores trimestrales a partir de microdatos públicos de la Encuesta Permanente de Hogares (EPH) del INDEC para el **Aglomerado 18 — Santiago del Estero - La Banda**.
+Sistema para descargar, integrar, validar y calcular indicadores trimestrales a partir de microdatos públicos de la Encuesta Permanente de Hogares (EPH) del INDEC para el **Aglomerado 18 — Santiago del Estero–La Banda**.
 
-El snapshot de referencia incluido en el repositorio cubre **13 períodos**, desde `2023T1` hasta `2026T1`. La V3.4.0 consolida la capa analítica de V3.3 y fortalece la metodología: incorpora tasas específicas de 14 años y más, corrige el ponderador del ingreso principal `P21` para usar `PONDIIO`, conserva `ADECOCUR` para deciles y documenta una validación externa reproducible contra publicaciones oficiales del INDEC.
+El snapshot de referencia incluido en el repositorio cubre **13 períodos**, desde `2023T1` hasta `2026T1`. La V3.5.0 amplía la base metodológica consolidada en V3.4.0: incorpora presión sobre el mercado de trabajo, horas e intensidad laboral, el cruce **Edad × Nivel educativo**, nuevas lecturas descriptivas para público no técnico y una definición más explícita del alcance institucional del portal. Se mantienen las tasas específicas de 14 años y más, `PONDIIO` para el ingreso principal `P21` y `ADECOCUR` para deciles.
 
-> **Nota de publicación:** el `data_snapshot/` incluido fue generado antes del cierre metodológico V3.4.0. Su histórico agregado todavía no contiene las nuevas columnas 14+ y su metadata de ingresos conserva la fórmula anterior con `PONDERA`. Antes de publicar el tag/release final para uso del portal, el snapshot debe regenerarse con el código V3.4.0 y volver a validarse. El código y la suite metodológica sí corresponden al cierre V3.4.0.
+> **Estado de publicación:** el `data_snapshot/` fue actualizado con el histórico validado de `2023T1` a `2026T1` y conserva las salidas agregadas y segmentadas necesarias para el portal. No contiene ZIP ni microdatos individuales.
 
-**Entregado a:** Dirección General de Estadística y Censos (DGEyC) — Santiago del Estero
-**Desarrollado por:** Práctica Profesionalizante II · ITSE 2026
+**Entregado a:** Dirección General de Estadística y Censos (DGEyC) — Santiago del Estero  
+**Desarrollado por:** Práctica Profesionalizante III · ITSE 2026  
 **Grupo:** Achaval María José · Cabaña Emilio · Constantinidi Leandro · Gomez Cinthia · Pinto Villegas Eduardo
 
 
-## Novedades de la versión 3.4.0
+## Novedades de la versión 3.5.0
 
-La V3.4.0 cierra, por el momento, la evolución metodológica del producto sobre la base estable del ETL 3.2.1 y la capa analítica incorporada en V3.3. Los principales resultados son:
+La V3.5.0 amplía el análisis laboral sin reemplazar la metodología consolidada en V3.4.0. El objetivo de esta evolución es mirar más allá de las tasas generales y, al mismo tiempo, hacer que los resultados sean más comprensibles para usuarios no técnicos.
 
-- tasas específicas de **actividad, empleo y desocupación para población de 14 años y más**, calculadas con `PONDERA`;
-- conservación de las tasas de 10 años y más como referencia histórica complementaria;
-- ingreso promedio ponderado de la ocupación principal (`P21`) calculado con **`PONDIIO`**, sin sustitución silenciosa por `PONDERA` cuando el ponderador específico no está disponible;
-- deciles de ingreso mediante **`ADECOCUR`**, sin fabricar deciles locales alternativos;
-- validación empírica de las tasas principales contra publicaciones oficiales del INDEC: **27/27 concordancias**, correspondientes a 9 trimestres (`2024T1`–`2026T1`) y 3 indicadores (actividad, empleo y desocupación);
-- bloque **Validación metodológica contra INDEC** en la pestaña Calidad y auditoría del portal, con evidencia descargable y matriz metodológica;
-- recuperación y prueba de la exportación del **reporte PDF institucional**;
-- suite automatizada consolidada en **97 tests aprobados**.
+Los principales resultados son:
 
-El portal conserva además lo incorporado en V3.3: Plotly, filtros temporales, comparación entre períodos, brechas y perfiles por sexo, edad y nivel educativo, deciles de ingreso e interpretación descriptiva. Las diferencias entre grupos o períodos no se presentan como causalidad ni como significancia estadística.
+- incorporación de indicadores de **presión sobre el mercado de trabajo**: ocupados demandantes, subocupación horaria, subocupación demandante y subocupación no demandante;
+- validación externa de esos cuatro indicadores para 13 períodos (`2023T1`–`2026T1`), con **52/52 concordancias** respecto de referencias publicadas por el INDEC;
+- incorporación de **horas trabajadas e intensidad laboral**, con promedio y mediana semanal ponderados y tasa de sobreocupación;
+- validación interna de horas e intensidad en los 13 períodos, sin presentar una concordancia numérica externa de sobreocupación por aglomerado cuando no existe una referencia compatible;
+- incorporación del cruce **Edad × Nivel educativo**, con 3 grupos de edad y 7 niveles educativos;
+- tamaño muestral visible y advertencias para combinaciones con bases reducidas; los grupos con `n < 10` permanecen visibles, pero se excluyen de la identificación automática de máximos y mínimos;
+- nuevas **lecturas descriptivas automáticas** en evolución laboral, presión laboral, horas e intensidad, ingresos y análisis segmentados;
+- mejoras de lenguaje y explicaciones pedagógicas para facilitar la lectura por público no técnico;
+- definición explícita del alcance metodológico e institucional del portal;
+- conservación de la validación de las tasas principales de V3.4.0: **27/27 concordancias** para actividad, empleo y desocupación;
+- suite automatizada consolidada en **101 tests aprobados**.
 
-**Decisión de alcance:** la comparación territorial Santiago del Estero–La Banda vs. NOA vs. total EPH no forma parte del cierre V3.4.0. Tras la revisión con el equipo EPH se decidió no incorporarla en esta etapa. El alcance territorial permanece centrado en el **Aglomerado 18**.
+La V3.5.0 conserva además las decisiones metodológicas de V3.4.0: tasas específicas de 14 años y más con `PONDERA`, ingreso principal `P21` ponderado con `PONDIIO`, deciles mediante `ADECOCUR`, evidencia de auditoría y reporte PDF.
+
+Las diferencias entre grupos o períodos se presentan como resultados **descriptivos**. No se interpretan automáticamente como causalidad ni como significancia estadística. En ingresos, las variaciones se presentan en términos nominales y no como cambios directos del poder adquisitivo.
+
+**Decisión de alcance:** la comparación territorial Santiago del Estero–La Banda vs. NOA vs. total EPH continúa fuera del alcance de esta versión. El proyecto permanece centrado en el **Aglomerado 18**.
 
 ## Alcance
 
 El proyecto automatiza las tareas necesarias para descargar, integrar, validar y calcular indicadores trimestrales a partir de microdatos públicos. Usa `PONDERA` para tasas, expansiones generales e informalidad y `PONDIIO` para el promedio ponderado de `P21`; conserva valores faltantes, produce metadatos y bloquea resultados que no superan los controles críticos.
 
-El Hito 3 se presenta mediante un dashboard institucional para usuarios no técnicos. Machine Learning podrá evaluarse en una etapa posterior, una vez definido un problema institucional concreto, con datos suficientes y validación metodológica.
+El producto se presenta mediante un **portal** orientado a usuarios no técnicos. Machine Learning podrá evaluarse en una etapa posterior, una vez definido un problema institucional concreto, con datos suficientes y validación metodológica.
 
 El Aglomerado 18 representa conjuntamente Santiago del Estero y La Banda. Los microdatos públicos no permiten separar ambas ciudades ni evaluar encuestadores o personal de carga.
+
+Los microdatos son producidos por el **INDEC**. Los indicadores del portal son calculados por este proyecto a partir de la EPH. El estado `VALIDADO` significa que el resultado superó los controles definidos por el proyecto; **no implica certificación oficial por parte del INDEC ni de la DGEyC**. El portal es una herramienta técnica y analítica y no constituye, por sí mismo, una publicación oficial institucional.
 
 ## Indicadores
 
@@ -56,6 +65,26 @@ Indicadores específicos de población de 14 años y más:
 
 Se calculan con `PONDERA` y constituyen la referencia específica vigente para el análisis por edad mínima de 14 años.
 
+Indicadores de presión sobre el mercado de trabajo:
+
+- ocupados demandantes;
+- subocupación horaria;
+- subocupación demandante;
+- subocupación no demandante.
+
+Se calculan sobre la **Población Económicamente Activa (PEA)** utilizando `PONDERA`. Estos indicadores complementan la tasa de desocupación: permiten observar situaciones de personas que tienen trabajo, pero buscan otra ocupación o desean trabajar más horas.
+
+Horas e intensidad laboral:
+
+- horas semanales totales = `PP3E_TOT + PP3F_TOT`;
+- promedio semanal ponderado;
+- mediana semanal ponderada;
+- sobreocupación identificada mediante `INTENSI = 3`, asociada a jornadas superiores a 45 horas semanales;
+- tasa de sobreocupación calculada sobre la PEA.
+
+La consistencia entre horas e `INTENSI` fue verificada para los 13 períodos. La sobreocupación se informa como validación interna del proyecto y no como concordancia externa por aglomerado cuando no existe una referencia oficial compatible.
+
+
 Indicadores específicos de población de 10 años y más:
 
 - `tasa_actividad_10_mas`.
@@ -67,6 +96,9 @@ Se conservan como referencia histórica complementaria y no sustituyen las tasas
 Los nombres anteriores `tasa_actividad`, `tasa_empleo` y `tasa_inactividad` correspondían al denominador de 10 años y más. La migración los renombra explícitamente y no cambia su significado en silencio.
 
 El ingreso promedio ponderado de la ocupación principal (`P21`) usa `PONDIIO`; no se reemplaza por `PONDERA` si ese ponderador específico no está disponible. Los deciles usan `ADECOCUR` cuando la variable existe. Los ingresos son nominales y no representan directamente variaciones del poder adquisitivo; requieren deflactación para comparaciones reales. En `2023T1`, `2023T2` y `2023T3`, la variable necesaria para estimar informalidad no está disponible. Por ese motivo, el indicador se presenta como no disponible y no se realiza imputación ni se reemplazan faltantes por cero.
+
+La V3.5.0 incorpora además el cruce **Edad × Nivel educativo**. Se utilizan los grupos de edad `14–29`, `30–64` y `65+`, combinados con siete niveles educativos de la EPH. El portal muestra el tamaño de muestra junto con los resultados y utiliza advertencias de lectura para bases reducidas. Esos umbrales son ayudas operativas del portal y **no constituyen reglas oficiales de precisión estadística del INDEC**.
+
 
 ## Estructura
 
@@ -81,10 +113,16 @@ Pipeline-EPH-Sgo-DGEyC/
 ├── portal/app.py                   Portal Streamlit (consulta + administración)
 ├── scripts/eda_eph_sde.py         Script EDA para ejecución local/VS Code
 ├── scripts/validar_contra_indec.py  Regeneración del contraste metodológico
+├── scripts/validar_presion_laboral_indec.py  Contraste externo de presión laboral
+├── scripts/diagnosticar_horas_trabajadas.py  Diagnóstico de horas e intensidad
+├── scripts/validar_horas_intensidad.py       Validación interna de horas e INTENSI
+├── scripts/generar_segmentados_historicos.py Regeneración de análisis segmentados
 ├── notebooks/EDA_EPH_SDE.ipynb    Notebook EDA demostrativo (Jupyter; Colab sólo como demo)
 ├── tests/test_pipeline.py          Suite automatizada del ETL
 ├── tests/test_monitor_actualizaciones.py  Pruebas del monitor
 ├── tests/test_visualizacion.py     Pruebas de rangos y filtros temporales
+├── tests/test_presion_mercado_trabajo.py  Pruebas de presión laboral
+├── tests/test_horas_intensidad.py  Pruebas de horas e intensidad
 ├── data/                           ZIP y TXT locales, excluidos de Git
 ├── results/                        Salidas locales, excluidas de Git
 ├── data_snapshot/                  Agregados validados para Streamlit Cloud
@@ -99,7 +137,7 @@ Pipeline-EPH-Sgo-DGEyC/
     └── ARQUITECTURA.md
 ```
 
-`data_snapshot/` contiene sólo histórico e indicadores agregados, control de calidad agregado, estados, validaciones, metadatos, manifiesto y documentación. No contiene ZIP, microdatos individuales ni bases unidas.
+`data_snapshot/` contiene histórico, indicadores y análisis segmentados agregados, control de calidad, estados, validaciones, metadatos, manifiesto y documentación. No contiene ZIP, microdatos individuales ni bases unidas.
 
 ## Instalación
 
@@ -228,7 +266,7 @@ Ejecución exacta desde la raíz:
 python -m streamlit run portal/app.py
 ```
 
-La V3.4.0 consolida un portal de **ocho secciones**: resumen ejecutivo, evolución laboral, brechas y perfiles, ingresos, calendario, calidad y auditoría, documentación y descargas, y administración. Las vistas de consulta usan `results/` únicamente si el último período es `VALIDADO` o `PUBLICADO`; en caso contrario conservan el último `data_snapshot/` validado. Calidad y auditoría incluye el bloque de validación metodológica contra INDEC y acceso a la evidencia 27/27.
+La V3.5.0 consolida un portal de **nueve secciones**: resumen ejecutivo, evolución laboral, presión laboral, brechas y perfiles, ingresos, calendario, calidad y auditoría, documentación y descargas, y administración. La sección de presión laboral incorpora también la lectura de horas e intensidad. Las vistas de consulta usan `results/` únicamente si el último período es `VALIDADO` o `PUBLICADO`; en caso contrario conservan el último `data_snapshot/` validado. Calidad y auditoría mantiene la evidencia de **27/27** concordancias de las tasas principales y la V3.5.0 agrega **52/52** concordancias para presión laboral.
 
 El área administrativa permite consultar INDEC, prevalidar una nueva publicación y revisar alertas sin usar la terminal. La incorporación final está bloqueada por defecto y requiere clave administrativa, `admin_enable_writes=true`, un reporte `LISTO_PARA_REVISION`, confirmación humana y la validación transaccional final del pipeline. Ver `docs/PORTAL_ADMINISTRACION.md`.
 
@@ -250,7 +288,7 @@ python -m pytest tests -q
 
 Las pruebas escriben sólo en directorios temporales y verifican fórmulas, migración de nombres, rangos, metadatos, manifiesto, bloqueo de publicación, conservación del snapshot, carga agregada y rutas relativas.
 
-Resultado de cierre de la V3.4.0: **97 tests aprobados**. Además, la validación metodológica reproduce **27 de 27** valores publicados por INDEC para actividad, empleo y desocupación en 9 trimestres (`2024T1`–`2026T1`). La validación manual histórica de 3.2.1 se conserva en `docs/VALIDACION_LOCAL_V3_2_1.md` como evidencia de esa etapa.
+Resultado de cierre de la V3.5.0: **101 tests aprobados**. La validación metodológica mantiene **27 de 27** concordancias con valores publicados por INDEC para actividad, empleo y desocupación en 9 trimestres (`2024T1`–`2026T1`) y agrega **52 de 52** concordancias para los cuatro indicadores de presión laboral en 13 períodos (`2023T1`–`2026T1`). Las horas y la intensidad laboral cuentan con validación de consistencia interna para los 13 períodos; no se afirma una concordancia numérica externa de sobreocupación por aglomerado. La validación manual histórica de 3.2.1 se conserva en `docs/VALIDACION_LOCAL_V3_2_1.md` como evidencia de esa etapa.
 
 ## Devolución institucional y mejoras incorporadas
 
@@ -264,6 +302,11 @@ Resultado de cierre de la V3.4.0: **97 tests aprobados**. Además, la validació
 - Arquitectura ampliable mediante funciones documentadas y salidas trazables.
 - Validación metodológica externa reproducible contra INDEC, con matriz y evidencia descargable.
 - Tasas específicas 14+ y ponderación de `P21` mediante `PONDIIO`.
+- Indicadores de presión laboral con validación externa 52/52.
+- Horas trabajadas e intensidad laboral con controles de consistencia histórica.
+- Cruce Edad × Nivel educativo con tamaño muestral visible y advertencias de lectura.
+- Lecturas descriptivas automáticas orientadas a público no técnico.
+- Alcance institucional explícito: `VALIDADO` no equivale a certificación oficial.
 
 ## Documentos históricos
 
@@ -273,25 +316,31 @@ Resultado de cierre de la V3.4.0: **97 tests aprobados**. Además, la validació
 
 - Los indicadores se calculan a partir de microdatos públicos y no sustituyen procedimientos institucionales confirmados.
 - Los indicadores operativos de campo requieren bases internas y definiciones institucionales.
-- El archivo `docs/Reporte_Ejecutivo_EPH_SDE_4T2025.pdf` se conserva como antecedente, pero no se ofrece en el dashboard: utiliza los nombres y denominadores anteriores y contiene una línea futura que ya no representa el alcance del Hito 3. No existe una fuente editable equivalente en el repositorio.
+- El archivo `docs/Reporte_Ejecutivo_EPH_SDE_4T2025.pdf` se conserva como antecedente, pero no se ofrece en el portal: utiliza los nombres y denominadores anteriores y contiene una línea futura que ya no representa el alcance del Hito 3. No existe una fuente editable equivalente en el repositorio.
 
-## Cierre de V3.4.0
+## Cierre de V3.5.0
 
-La V3.4.0 se considera **cerrada por el momento** como versión metodológica estable del repositorio actual. El alcance conserva el Aglomerado 18 y no incorpora comparación territorial NOA/nacional. Quedan como líneas futuras, sujetas a priorización institucional: tratamiento inferencial asociado al diseño muestral, contraste externo de informalidad, revisión del control interno basado en `REALIZADA` y mejoras de escalabilidad/arquitectura.
+La V3.5.0 se considera **cerrada** como versión estable de esta etapa del proyecto. El alcance conserva el Aglomerado 18 y no incorpora comparación territorial NOA/nacional.
 
-Las notas preparadas para el release se encuentran en `docs/RELEASE_NOTES_V3_4_0.md`.
+El cierre queda respaldado por:
+
+- **101 tests aprobados**;
+- **27/27** concordancias externas de actividad, empleo y desocupación;
+- **52/52** concordancias externas de presión laboral;
+- validación interna de horas e intensidad en los 13 períodos;
+- análisis Edad × Nivel educativo regenerado para `2023T1`–`2026T1`;
+- snapshot actualizado y documentación alineada con la versión publicada;
+- tag y release `v3.5.0`.
+
+Quedan como líneas futuras, sujetas a priorización institucional: tratamiento inferencial asociado al diseño muestral, contraste externo de informalidad, revisión del control interno basado en `REALIZADA`, evaluación de salud y migración, un eventual módulo separado de pobreza e indigencia y mejoras de escalabilidad/arquitectura.
+
+`docs/RELEASE_NOTES_V3_4_0.md` se conserva como documento histórico de esa versión. El detalle vigente de V3.5.0 se registra en `CHANGELOG.md` y en la release `v3.5.0` del repositorio.
 
 ## Fuente
 
 Encuesta Permanente de Hogares — Instituto Nacional de Estadística y Censos (INDEC), República Argentina: <https://www.indec.gob.ar>.
 
 
-## Análisis segmentado V3.3
+## Análisis segmentado V3.3 → V3.5
 
-La V3.3 agrega una capa analítica sobre el ETL 3.2.1 para explorar brechas por sexo, edad y nivel educativo, además de ingresos por deciles cuando `ADECOCUR` y el ponderador específico `PONDIIO` están disponibles. El portal muestra estas salidas en **Brechas y perfiles**. Son estimaciones descriptivas de la EPH y deben leerse junto con las consideraciones de error muestral.
-
-## Portal en línea
-
-La versión pública del portal EPH V3.4.0 está disponible en:
-
-https://pipeline-eph-dgeyc-v340.streamlit.app/
+La V3.3 incorporó la capa analítica para explorar brechas por sexo, edad y nivel educativo, además de ingresos por deciles cuando `ADECOCUR` y el ponderador específico `PONDIIO` están disponibles. La V3.5 amplía esa capa con el cruce **Edad × Nivel educativo**, regenerado para los 13 períodos del histórico. El portal muestra estas salidas en **Brechas y perfiles**, junto con tamaño muestral, población expandida y advertencias para grupos reducidos. Son estimaciones descriptivas de la EPH y deben leerse junto con las consideraciones de error muestral.
