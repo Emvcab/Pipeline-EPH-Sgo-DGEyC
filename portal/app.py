@@ -1314,6 +1314,6 @@ with tab_admin:
 
 st.divider()
 st.caption(
-    "Práctica Profesionalizante II · ITSE 2026 · "
+    "Práctica Profesionalizante III · ITSE 2026 · "
     "Achaval · Cabaña · Constantinidi · Gomez · Pinto Villegas"
 )
